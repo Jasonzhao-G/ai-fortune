@@ -1,0 +1,106 @@
+:root {
+  --color-bg: #1c1915;
+  --color-card: #2a2520;
+  --color-card-hover: #332e28;
+  --color-border: #3d3630;
+  --color-text: #f5f0e8;
+  --color-muted: #9a9088;
+  --color-accent: #c45c48;
+  --color-accent-secondary: #5a8a7a;
+  --color-accent-glow: rgba(196, 92, 72, 0.25);
+  --color-red: #e05555;
+  --color-green: #4a9e6a;
+  --color-gold: #d4a574;
+}
+
+.light {
+  --color-bg: #faf7f2;
+  --color-card: #ffffff;
+  --color-card-hover: #f5f0ea;
+  --color-border: #e8e0d5;
+  --color-text: #2c2416;
+  --color-muted: #8a8078;
+  --color-accent: #b84a38;
+  --color-accent-secondary: #4a7a6a;
+  --color-accent-glow: rgba(184, 74, 56, 0.15);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-app-bg text-app-text antialiased;
+    font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    background-image:
+      radial-gradient(ellipse 70% 45% at 80% 0%, rgba(212, 165, 116, 0.08), transparent),
+      radial-gradient(ellipse 50% 35% at 10% 90%, rgba(90, 138, 122, 0.06), transparent);
+  }
+}
+
+@layer components {
+  .app-card {
+    @apply rounded-2xl border border-app-border bg-app-card p-4;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .app-btn {
+    @apply w-full rounded-2xl py-3.5 text-sm font-medium text-white transition-all;
+    background: linear-gradient(135deg, #c45c48 0%, #d4a574 100%);
+    box-shadow: 0 4px 16px var(--color-accent-glow);
+  }
+  .app-btn:hover { opacity: 0.93; transform: translateY(-1px); }
+  .app-btn:disabled { opacity: 0.4; transform: none; box-shadow: none; }
+
+  .app-btn-secondary {
+    @apply w-full rounded-2xl border-2 border-app-accent py-3 text-sm font-medium text-app-accent transition-colors;
+  }
+  .app-btn-secondary:hover {
+    background-color: var(--color-accent-glow);
+  }
+
+  .app-btn-outline {
+    @apply w-full rounded-xl border border-app-border py-3 text-sm text-app-text transition-colors hover:border-app-accent hover:text-app-accent;
+  }
+
+  .app-input {
+    @apply w-full rounded-xl border border-app-border px-4 py-2.5 text-sm text-app-text placeholder-app-muted outline-none focus:border-app-accent;
+    background-color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+  }
+
+  .app-label { @apply mb-1 block text-xs font-medium text-app-muted; }
+
+  .page-title {
+    @apply text-xl font-bold tracking-wide text-app-text;
+    color: var(--color-text);
+    -webkit-text-fill-color: unset;
+  }
+
+  .module-card {
+    @apply flex flex-col items-center justify-center rounded-2xl border border-app-border bg-app-card p-3 transition-all active:scale-95;
+  }
+  .module-card-featured {
+    @apply module-card;
+    border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+    background: linear-gradient(145deg, var(--color-card) 0%, rgba(196, 92, 72, 0.08) 100%);
+  }
+
+  .cta-banner {
+    @apply relative overflow-hidden rounded-2xl p-4 text-center;
+    background: linear-gradient(135deg, #c45c48 0%, #a84838 50%, #5a8a7a 100%);
+  }
+
+  .menu-item {
+    @apply flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-app-text transition-colors hover:bg-app-card-hover;
+  }
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { @apply rounded-full bg-app-border; }
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
