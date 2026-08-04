@@ -9,6 +9,10 @@ import ReportPosterButton, { SharePosterButton } from "@/components/ReportPoster
 import { canUse, incrementUsage, getRemaining, addHistory } from "@/lib/user-store";
 import { saveRecord, buildPersonKey, buildPersonLabel } from "@/lib/record-store";
 import { useApp } from "@/context/AppContext";
+import PrimaryPersonModal from "@/components/PrimaryPersonModal";
+import { DEMO_XIANG_PALM, DEMO_XIANG_FACE } from "@/lib/demo-data";
+import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
+import XiangDemoDiagram from "@/components/XiangDemoDiagram";
 import type { AnalysisResult } from "@/lib/types";
 
 type Tab = "palm" | "face";
@@ -20,12 +24,14 @@ export default function XiangPage() {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [paywall, setPaywall] = useState(false);
+  const [primaryModal, setPrimaryModal] = useState(false);
   const [pendingType, setPendingType] = useState<Tab>("palm");
 
   const remaining = getRemaining("xiang");
 
   const startAnalyze = () => {
     if (!preview) return;
+    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
     if (!canUse("xiang")) { setPaywall(true); return; }
     setPendingType(tab);
     setGenerating(true);
@@ -68,6 +74,8 @@ export default function XiangPage() {
     return <GenerationOverlay onComplete={onGenerateComplete} duration={5000} />;
   }
 
+  const demo = tab === "palm" ? DEMO_XIANG_PALM : DEMO_XIANG_FACE;
+
   return (
     <div className="px-4 pb-4">
       <header className="mb-4 pt-2 text-center">
@@ -94,6 +102,30 @@ export default function XiangPage() {
         onImageSelect={setPreview}
         onClear={() => { setPreview(null); setResult(null); }}
       />
+
+      {!preview && !result && (
+        <div className="mt-4 app-card">
+          <p className="mb-2 text-xs font-medium text-app-text">
+            {tab === "palm" ? "手相" : "面相"}测算示例
+          </p>
+          <div className="mb-3 rounded-xl border border-dashed border-app-border bg-app-bg/50 px-2 py-3">
+            <XiangDemoDiagram type={tab} />
+            <p className="mt-2 text-center text-[10px] text-app-muted">
+              {tab === "palm" ? "传统手相示意 · 掌纹平放、光线充足" : "传统面相示意 · 正面免冠、五官清晰"}
+            </p>
+          </div>
+          <span className="mb-2 inline-block rounded-full bg-app-gold/20 px-2 py-0.5 text-[10px] text-app-gold">
+            {demo.type}分析结果示例
+          </span>
+          <p className="text-xs leading-relaxed text-app-text">{demo.summary}</p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {demo.tags.map((t) => (
+              <span key={t} className="rounded-full border border-app-border px-2 py-0.5 text-[10px] text-app-muted">{t}</span>
+            ))}
+          </div>
+          <p className="mt-3 text-[10px] text-app-muted">上传照片后点击「AI 大师看相分析」获取专属解读</p>
+        </div>
+      )}
 
       {preview && !result && (
         <button onClick={startAnalyze} className="app-btn mt-4">
@@ -126,6 +158,7 @@ export default function XiangPage() {
       )}
 
       <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="看相" />
+      <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
     </div>
   );
 }

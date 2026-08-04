@@ -1,14 +1,14 @@
 "use client";
 
-import { Home, TrendingUp, ScanEye, Users } from "lucide-react";
+import { Home, Sparkles, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "首页", icon: Home },
+  { href: "/spirit-pet", label: "AI灵宠", icon: Sparkles },
   { href: "/lifekline", label: "人生K线", icon: TrendingUp },
-  { href: "/xiang", label: "看相", icon: ScanEye },
   { href: "/community", label: "社区", icon: Users },
 ];
 

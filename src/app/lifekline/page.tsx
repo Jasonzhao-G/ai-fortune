@@ -21,6 +21,8 @@ import {
   saveRecord, buildPersonKey, buildPersonLabel,
 } from "@/lib/record-store";
 import { saveBirthInfo } from "@/lib/birth-store";
+import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
+import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import type { BirthInfo, KlineData, YearAnalysis, OverallAnalysis, BaziResult, KlineViewMode } from "@/lib/types";
 import { X } from "lucide-react";
 import ReportPosterButton, { SharePosterButton } from "@/components/ReportPosterButton";
@@ -51,6 +53,7 @@ export default function LifeklinePage() {
   const [selectedYear, setSelectedYear] = useState<YearAnalysis | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | undefined>();
   const [paywall, setPaywall] = useState(false);
+  const [primaryModal, setPrimaryModal] = useState(false);
   const [lifeYears, setLifeYears] = useState(10);
 
   const remaining = getRemaining("lifekline");
@@ -71,14 +74,19 @@ export default function LifeklinePage() {
 
   useEffect(() => {
     if (birthInfo && phase === "result") {
-      setPeriodKline(generatePeriodKline(birthInfo, lifeYears));
-      setDrillYear(null);
-      setSelectedYear(null);
-      setSelectedIndex(undefined);
+      try {
+        setPeriodKline(generatePeriodKline(birthInfo, lifeYears));
+        setDrillYear(null);
+        setSelectedYear(null);
+        setSelectedIndex(undefined);
+      } catch (err) {
+        console.error("period kline failed", err);
+      }
     }
   }, [lifeYears, birthInfo, phase]);
 
   const handleSubmit = (info: BirthInfo) => {
+    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
     if (!canUse("lifekline")) { setPaywall(true); return; }
     setBirthInfo(info);
     setPhase("generating");
@@ -86,34 +94,44 @@ export default function LifeklinePage() {
 
   const onGenerateComplete = useCallback(() => {
     if (!birthInfo) return;
-    const full = generateFullLifeKline(birthInfo);
-    const period = generatePeriodKline(birthInfo, lifeYears);
-    const baziResult = calculateBazi(birthInfo);
-    const overallResult = generateOverallAnalysis(full, birthInfo);
+    try {
+      const full = generateFullLifeKline(birthInfo);
+      const period = generatePeriodKline(birthInfo, lifeYears);
+      let baziResult: BaziResult | null = null;
+      try {
+        baziResult = calculateBazi(birthInfo);
+      } catch {
+        baziResult = null;
+      }
+      const overallResult = generateOverallAnalysis(full, birthInfo);
 
-    setFullKline(full);
-    setPeriodKline(period);
-    setDrillYear(null);
-    setBazi(baziResult);
-    setOverall(overallResult);
-    incrementUsage("lifekline");
-    addHistory({
-      type: "lifekline",
-      title: `${birthInfo.name || birthInfo.year + "年"}生辰K线`,
-      data: { birthInfo, kline: full, overall: overallResult, bazi: baziResult },
-    });
-    const personName = birthInfo.name || `命理者${birthInfo.year}`;
-    saveRecord({
-      type: "lifekline",
-      personKey: buildPersonKey(personName, birthInfo),
-      personName,
-      personLabel: buildPersonLabel(personName, birthInfo),
-      title: `人生K线 · ${lifeYears === 1 ? "1年(月)" : lifeYears === 100 ? "全部" : lifeYears + "年"}`,
-      summary: overallResult.summary,
-      data: { birthInfo, kline: full, overall: overallResult, bazi: baziResult, lifeYears },
-    });
-    saveBirthInfo(birthInfo);
-    setPhase("result");
+      setFullKline(full);
+      setPeriodKline(period);
+      setDrillYear(null);
+      setBazi(baziResult);
+      setOverall(overallResult);
+      incrementUsage("lifekline");
+      addHistory({
+        type: "lifekline",
+        title: `${birthInfo.name || birthInfo.year + "年"}生辰K线`,
+        data: { birthInfo, kline: full, overall: overallResult, bazi: baziResult },
+      });
+      const personName = birthInfo.name || `命理者${birthInfo.year}`;
+      saveRecord({
+        type: "lifekline",
+        personKey: buildPersonKey(personName, birthInfo),
+        personName,
+        personLabel: buildPersonLabel(personName, birthInfo),
+        title: `人生K线 · ${lifeYears === 1 ? "1年(月)" : lifeYears === 100 ? "全部" : lifeYears + "年"}`,
+        summary: overallResult.summary,
+        data: { birthInfo, kline: full, overall: overallResult, bazi: baziResult, lifeYears },
+      });
+      saveBirthInfo(birthInfo);
+      setPhase("result");
+    } catch (err) {
+      console.error("lifekline generate failed", err);
+      setPhase("form");
+    }
   }, [birthInfo, lifeYears]);
 
   const handleBarClick = (_index: number, item: KlineData) => {
@@ -305,6 +323,7 @@ export default function LifeklinePage() {
       )}
 
       <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="人生K线" />
+      <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
     </div>
   );
 }

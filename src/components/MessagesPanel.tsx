@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Bell, Heart, MessageCircle, Sparkles } from "lucide-react";
+import { X, Bell, Heart, MessageCircle, Sparkles, UserPlus, Mail, Repeat2, Gift } from "lucide-react";
 import {
   getMessages, markMessageRead, markAllRead, getUnreadCount,
 } from "@/lib/message-store";
@@ -13,11 +13,16 @@ interface MessagesPanelProps {
   onClose: () => void;
 }
 
-const ICONS = {
+const ICONS: Record<AppMessage["type"], typeof Bell> = {
   like: Heart,
   comment: MessageCircle,
   reply: MessageCircle,
   master: Sparkles,
+  follow_post: UserPlus,
+  dm_request: Mail,
+  dm: Mail,
+  repost: Repeat2,
+  gift_food: Gift,
 };
 
 export default function MessagesPanel({ userId, open, onClose }: MessagesPanelProps) {
@@ -57,7 +62,7 @@ export default function MessagesPanel({ userId, open, onClose }: MessagesPanelPr
         ) : (
           <div className="divide-y divide-app-border">
             {messages.map((msg) => {
-              const Icon = ICONS[msg.type];
+              const Icon = ICONS[msg.type] ?? Bell;
               return (
                 <button
                   key={msg.id}

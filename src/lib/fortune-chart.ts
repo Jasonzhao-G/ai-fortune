@@ -1,5 +1,13 @@
-import type { BirthInfo, KlineData } from "./types";
+import type { BirthInfo, KlineData, BaziResult } from "./types";
 import { calculateBazi } from "./bazi";
+
+function safeCalculateBazi(info: BirthInfo): BaziResult | null {
+  try {
+    return calculateBazi(info);
+  } catch {
+    return null;
+  }
+}
 
 function seededRandom(seed: number): () => number {
   let s = seed;
@@ -70,10 +78,10 @@ function buildYearBar(
   prevClose: number,
   seed: number,
   rand: () => number,
-  bazi: ReturnType<typeof calculateBazi>,
+  bazi: BaziResult | null,
   flags: Partial<KlineData> = {}
 ): { bar: KlineData; nextClose: number } {
-  const liunian = bazi.liunian.find((l) => l.year === year);
+  const liunian = bazi?.liunian.find((l) => l.year === year);
   const baseScore = age === 0 ? 50 : liunian ? ganZhiScore(liunian.ganZhi, seed + age) : 50;
   const volatility = age === 0 ? 2 : 5 + rand() * 12;
   const open = prevClose;
@@ -98,7 +106,7 @@ function buildYearBar(
 }
 
 function advanceCloseToAge(info: BirthInfo, targetAge: number): number {
-  const bazi = calculateBazi(info);
+  const bazi = safeCalculateBazi(info);
   const seed = hashBirth(info);
   const rand = seededRandom(seed);
   let prevClose = 48 + (seed % 15);
@@ -112,7 +120,7 @@ function advanceCloseToAge(info: BirthInfo, targetAge: number): number {
 
 /** 0–100 岁完整人生 K 线 */
 export function generateFullLifeKline(info: BirthInfo): KlineData[] {
-  const bazi = calculateBazi(info);
+  const bazi = safeCalculateBazi(info);
   const seed = hashBirth(info);
   const rand = seededRandom(seed);
   const currentAge = getCurrentAge(info.year, info.month, info.day);
@@ -135,7 +143,7 @@ export function generateFullLifeKline(info: BirthInfo): KlineData[] {
 
 /** 从今年起未来 N 年的年 K 线（铺满横轴） */
 export function generateForwardYearsKline(info: BirthInfo, count: number): KlineData[] {
-  const bazi = calculateBazi(info);
+  const bazi = safeCalculateBazi(info);
   const seed = hashBirth(info);
   const rand = seededRandom(seed + 9999);
   const currentYear = new Date().getFullYear();

@@ -1,6 +1,8 @@
 import type { KlineData } from "./types";
 import { getInviteQrUrl } from "./user-store";
 
+import { BRAND_NAME, BRAND_SLOGAN } from "./brand";
+
 export type PosterStyle = "classic" | "gold" | "jade";
 
 export interface KlineChartBlock {
@@ -14,16 +16,19 @@ export interface PosterData {
   summary: string;
   scores?: { label: string; value: number }[];
   userName?: string;
-  type: "lifekline" | "liuyao" | "xiang";
+  type: "lifekline" | "liuyao" | "xiang" | "spirit-pet";
   /** @deprecated use klineCharts */
   kline?: KlineData[];
   klineCharts?: KlineChartBlock[];
   baziText?: string;
   dimensions?: { label: string; score: number; text?: string; key?: string }[];
+  petEmoji?: string;
+  petName?: string;
+  petReason?: string;
 }
 
-export const BRAND_NAME = "AI K线";
-export const BRAND_SLOGAN = "AI 驱动的人生 K 线命理可视化平台";
+
+export { BRAND_NAME, BRAND_SLOGAN };
 
 const STYLES: Record<PosterStyle, { bg: [string, string, string]; accent: string; gold: string; text: string; muted: string }> = {
   classic: { bg: ["#1c1915", "#2a2520", "#1a2820"], accent: "#c45c48", gold: "#d4a574", text: "#f5f0e8", muted: "#9a9088" },
@@ -160,22 +165,25 @@ function drawProgressBar(
 }
 
 export async function generatePoster(data: PosterData, style: PosterStyle = "classic"): Promise<string> {
-  const charts: KlineChartBlock[] = data.klineCharts?.length
-    ? data.klineCharts
-    : data.kline?.length
-      ? [{ title: "人生 K 线", data: data.kline }]
-      : [];
+  const charts: KlineChartBlock[] = data.type === "spirit-pet" ? [] :
+    data.klineCharts?.length
+      ? data.klineCharts
+      : data.kline?.length
+        ? [{ title: "人生 K 线", data: data.kline }]
+        : [];
 
+  const isSpiritPet = data.type === "spirit-pet";
   const chartBlockH = 200;
   const chartGap = 16;
   const chartsTotalH = charts.length * chartBlockH + (charts.length - 1) * chartGap;
+  const spiritPetBlockH = isSpiritPet ? 280 : 0;
 
   const dims: { label: string; score: number; key?: string }[] =
     data.dimensions ?? data.scores?.map((s) => ({ label: s.label, score: s.value })) ?? [];
   const overallDim = dims.find((d) => d.key === "overall" || d.label === "整体命势");
   const otherDims = dims.filter((d) => d !== overallDim);
 
-  const H = 1320 + chartsTotalH + (overallDim ? 60 : 0) + otherDims.length * 36;
+  const H = 1320 + chartsTotalH + spiritPetBlockH + (overallDim ? 60 : 0) + otherDims.length * 36;
   const W = 750;
   const theme = STYLES[style];
   const canvas = document.createElement("canvas");
@@ -210,6 +218,28 @@ export async function generatePoster(data: PosterData, style: PosterStyle = "cla
   }
 
   let cursorY = data.subtitle ? 185 : 165;
+
+  if (isSpiritPet && data.petEmoji) {
+    roundRect(ctx, 40, cursorY, W - 80, spiritPetBlockH - 20, 16);
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fill();
+    ctx.font = "100px serif";
+    ctx.textAlign = "center";
+    ctx.fillText(data.petEmoji, W / 2, cursorY + 110);
+    if (data.petName) {
+      ctx.fillStyle = theme.gold;
+      ctx.font = "bold 32px PingFang SC, sans-serif";
+      ctx.fillText(data.petName, W / 2, cursorY + 175);
+    }
+    if (data.petReason) {
+      ctx.fillStyle = theme.muted;
+      ctx.font = "16px PingFang SC, sans-serif";
+      ctx.textAlign = "left";
+      wrapText(ctx, data.petReason, 60, cursorY + 210, W - 120, 22, 3);
+    }
+    cursorY += spiritPetBlockH;
+  }
+
   charts.forEach((block) => {
     drawKlineChart(ctx, block.data, 40, cursorY, W - 80, chartBlockH, theme, block.title);
     cursorY += chartBlockH + chartGap;

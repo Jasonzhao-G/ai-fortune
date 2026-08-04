@@ -25,27 +25,49 @@ function applyTheme(theme: Theme) {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("zh");
-  const [theme, setThemeState] = useState<Theme>("dark");
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window === "undefined") return "zh";
+    try {
+      const saved = localStorage.getItem("ai-fortune-locale") as Locale | null;
+      return saved === "en" ? "en" : "zh";
+    } catch {
+      return "zh";
+    }
+  });
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "dark";
+    try {
+      const saved = localStorage.getItem("ai-fortune-theme") as Theme | null;
+      return saved === "light" ? "light" : "dark";
+    } catch {
+      return "dark";
+    }
+  });
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return getOrCreateUser();
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref") ?? undefined;
-    const u = getOrCreateUser(ref);
-    if (ref && ref !== u.id && u.referredBy === ref) {
-      registerReferral(ref, u.id);
-    }
-    setUser(u);
+    applyTheme(theme);
+  }, [theme]);
 
+  useEffect(() => {
     try {
-      const savedLocale = localStorage.getItem("ai-fortune-locale") as Locale | null;
-      const savedTheme = localStorage.getItem("ai-fortune-theme") as Theme | null;
-      if (savedLocale === "zh" || savedLocale === "en") setLocaleState(savedLocale);
-      const th = savedTheme === "light" ? "light" : "dark";
-      setThemeState(th);
-      applyTheme(th);
-    } catch { /* ignore */ }
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get("ref") ?? undefined;
+      const u = getOrCreateUser(ref);
+      if (ref && ref !== u.id && u.referredBy === ref) {
+        try { registerReferral(ref, u.id); } catch { /* ignore */ }
+      }
+      setUser(u);
+    } catch (err) {
+      console.error("init user failed", err);
+    }
   }, []);
 
   const setLocale = useCallback((l: Locale) => {
@@ -59,7 +81,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     applyTheme(t);
   }, []);
 
-  const refreshUser = useCallback(() => setUser(getOrCreateUser()), []);
+  const refreshUser = useCallback(() => {
+    try { setUser(getOrCreateUser()); } catch { /* ignore */ }
+  }, []);
 
   const t = translations[locale];
 

@@ -5,6 +5,8 @@ import { CheckCircle } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { submitMasterConsult, mockMasterReply } from "@/lib/message-store";
 import { saveRecord, buildPersonKey, buildPersonLabel } from "@/lib/record-store";
+import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
+import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import type { BirthInfo } from "@/lib/types";
 
 const TEST_MODE_FREE = true;
@@ -19,9 +21,11 @@ export default function MasterPage() {
   const [calendar, setCalendar] = useState<"solar" | "lunar">("solar");
   const [question, setQuestion] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [primaryModal, setPrimaryModal] = useState(false);
 
   const handleSubmit = () => {
     if (!name.trim() || !question.trim() || !user) return;
+    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
     const req = submitMasterConsult({
       userId: user.id,
       name: name.trim(),
@@ -148,6 +152,8 @@ export default function MasterPage() {
       <p className="mt-4 text-center text-[10px] text-app-muted">
         提交后大师将在 24 小时内回复 · 回复将推送至「消息」
       </p>
+
+      <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
     </div>
   );
 }

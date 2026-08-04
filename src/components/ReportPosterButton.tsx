@@ -11,9 +11,11 @@ import { useApp } from "@/context/AppContext";
 interface ReportPosterButtonProps {
   data: Omit<PosterData, "userName">;
   label?: string;
+  /** 返回 false 则中止生成 */
+  onBeforeGenerate?: () => boolean;
 }
 
-export default function ReportPosterButton({ data, label = "生成报告海报" }: ReportPosterButtonProps) {
+export default function ReportPosterButton({ data, label = "生成报告海报", onBeforeGenerate }: ReportPosterButtonProps) {
   const { user } = useApp();
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -22,6 +24,7 @@ export default function ReportPosterButton({ data, label = "生成报告海报" 
   const buildData = (): PosterData => ({ ...data, userName: user?.nickname });
 
   const openPreview = async () => {
+    if (onBeforeGenerate && !onBeforeGenerate()) return;
     setLoading(true);
     try {
       const url = await generatePoster(buildData(), style);
@@ -63,13 +66,14 @@ export default function ReportPosterButton({ data, label = "生成报告海报" 
   );
 }
 
-export function SharePosterButton({ data }: ReportPosterButtonProps) {
+export function SharePosterButton({ data, onBeforeGenerate }: ReportPosterButtonProps) {
   const { user } = useApp();
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [style, setStyle] = useState<PosterStyle>("classic");
 
   const openPreview = async () => {
+    if (onBeforeGenerate && !onBeforeGenerate()) return;
     setLoading(true);
     try {
       const url = await generatePoster({ ...data, userName: user?.nickname }, style);

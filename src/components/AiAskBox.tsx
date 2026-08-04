@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { Send, Sparkles, Pencil } from "lucide-react";
 import { canUse, incrementUsage, getRemaining, addHistory } from "@/lib/user-store";
 import { saveRecord, buildPersonKey, buildPersonLabel } from "@/lib/record-store";
-import { loadBirthInfo, saveBirthInfo, formatBirthSummary } from "@/lib/birth-store";
+import { loadBirthInfo, saveBirthInfo, getEffectiveBirthInfo, formatBirthSummary } from "@/lib/birth-store";
 import { useApp } from "@/context/AppContext";
 import PaywallModal from "@/components/PaywallModal";
+import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import BirthForm from "@/components/BirthForm";
+import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import type { BirthInfo } from "@/lib/types";
 
 const PROMPTS = [
@@ -44,11 +46,12 @@ export default function AiAskBox() {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [paywall, setPaywall] = useState(false);
+  const [primaryModal, setPrimaryModal] = useState(false);
 
   const remaining = getRemaining("aiAsk");
 
   useEffect(() => {
-    const saved = loadBirthInfo();
+    const saved = getEffectiveBirthInfo() ?? loadBirthInfo();
     if (saved) {
       setBirthInfo(saved);
       setEditingBirth(false);
@@ -69,6 +72,7 @@ export default function AiAskBox() {
       setEditingBirth(true);
       return;
     }
+    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
     if (!canUse("aiAsk")) { setPaywall(true); return; }
 
     setLoading(true);
@@ -169,6 +173,7 @@ export default function AiAskBox() {
         )}
 
         <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="问 AI" />
+        <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
       </div>
     </div>
   );

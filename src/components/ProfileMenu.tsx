@@ -1,43 +1,44 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { X, Gift, Sparkles, Sun, Moon, Globe, Mail, Info, Copy, Check, Bell, History } from "lucide-react";
+import { X, Gift, Sparkles, Sun, Moon, Globe, Mail, Info, Bell, History, UserPen } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { UserProfile } from "@/lib/types";
-import {
-  getInviteLink, getInviteQrUrl, getTrialExpiryLabel, REFERRAL_BONUS_DAYS,
-} from "@/lib/user-store";
-import { getReferralCount } from "@/lib/community-store";
+import { getInviteLink } from "@/lib/user-store";
+import { getTotalUses, getPetFoodBalance, hasUnlimitedAccess } from "@/lib/pet-food-store";
 import ContactModal from "@/components/ContactModal";
 import MessagesPanel, { useUnreadCount } from "@/components/MessagesPanel";
+import InviteModal from "@/components/InviteModal";
 
 interface ProfileMenuProps {
   user: UserProfile;
   open: boolean;
   onClose: () => void;
+  onEditProfile?: () => void;
+  onOpenPetFood?: () => void;
 }
 
-export default function ProfileMenu({ user, open, onClose }: ProfileMenuProps) {
+export default function ProfileMenu({ user, open, onClose, onEditProfile, onOpenPetFood }: ProfileMenuProps) {
   const { theme, setTheme, locale, setLocale, refreshUser } = useApp();
   const [showInvite, setShowInvite] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [msgKey, setMsgKey] = useState(0);
   const unread = useUnreadCount(user.id, msgKey);
 
   if (!open) return null;
 
   const inviteLink = getInviteLink(user.id);
-  const refCount = getReferralCount(user.id);
-  const trialLabel = getTrialExpiryLabel(user);
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  let foodBalance;
+  try {
+    foodBalance = getPetFoodBalance(user.id);
+  } catch {
+    foodBalance = { giftedUses: 5, purchasedUses: 0 };
+  }
+  const foodLabel = hasUnlimitedAccess(foodBalance)
+    ? "无限灵粮"
+    : `${getTotalUses(foodBalance)} 次灵粮`;
 
   return (
     <>
@@ -51,20 +52,25 @@ export default function ProfileMenu({ user, open, onClose }: ProfileMenuProps) {
 
           <div className="border-b border-app-border p-4">
             <div className="flex items-center gap-3">
-              <img src={user.avatar} alt="" className="h-14 w-14 rounded-full border-2 border-app-gold/40" />
-              <div>
+              <button onClick={onEditProfile} className="shrink-0">
+                <img src={user.avatar} alt="" className="h-14 w-14 rounded-full border-2 border-app-gold/40 object-cover" />
+              </button>
+              <div className="min-w-0 flex-1">
                 <p className="font-medium text-app-text">{user.nickname}</p>
                 <p className="text-xs text-app-muted">ID: {user.id}</p>
                 {user.subscription && (
                   <span className="mt-1 inline-block rounded-full bg-app-accent/20 px-2 py-0.5 text-[10px] text-app-accent">会员</span>
                 )}
-                {trialLabel && (
-                  <span className="mt-1 inline-block rounded-full bg-app-gold/20 px-2 py-0.5 text-[10px] text-app-gold">
-                    奖励至 {trialLabel}
-                  </span>
-                )}
+                <button onClick={onOpenPetFood} className="mt-1 inline-block rounded-full bg-app-gold/20 px-2 py-0.5 text-[10px] text-app-gold">
+                  🍖 {foodLabel}
+                </button>
               </div>
             </div>
+            {onEditProfile && (
+              <button onClick={onEditProfile} className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-app-border py-2 text-xs text-app-accent">
+                <UserPen className="h-3.5 w-3.5" /> 编辑头像与昵称
+              </button>
+            )}
           </div>
 
           <div className="p-2">
@@ -86,7 +92,17 @@ export default function ProfileMenu({ user, open, onClose }: ProfileMenuProps) {
               我的测算
             </Link>
 
-            <button onClick={() => setShowInvite(!showInvite)} className="menu-item">
+            <Link href="/community/me" onClick={onClose} className="menu-item">
+              <Sparkles className="h-4 w-4 text-app-accent" />
+              社区个人中心
+            </Link>
+
+            <Link href="/spirit-pet" onClick={onClose} className="menu-item">
+              <Sparkles className="h-4 w-4 text-app-gold" />
+              AI 灵宠
+            </Link>
+
+            <button onClick={() => setShowInvite(true)} className="menu-item">
               <Gift className="h-4 w-4 text-app-gold" />邀请好友
             </button>
             <button onClick={() => alert("精彩活动即将上线！")} className="menu-item">
@@ -128,27 +144,6 @@ export default function ProfileMenu({ user, open, onClose }: ProfileMenuProps) {
               <Info className="h-4 w-4 text-app-muted" />
               <span className="text-app-muted">版本 v1.3.0</span>
             </div>
-
-            {showInvite && (
-              <div className="mx-2 mt-2 rounded-xl border border-app-border p-4">
-                <div className="mb-3 rounded-xl bg-app-accent/10 p-3">
-                  <p className="text-xs font-semibold text-app-accent">邀请有礼</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-app-muted">
-                    成功邀请 1 位好友注册，即可获得 <span className="font-bold text-app-gold">{REFERRAL_BONUS_DAYS} 天</span> 使用期限！多邀多得，分享给朋友一起测命理吧 🎁
-                  </p>
-                </div>
-                <p className="mb-2 text-xs font-medium">已邀请 {refCount} 人 · 累计 {refCount * REFERRAL_BONUS_DAYS} 天</p>
-                <div className="mb-3 flex justify-center">
-                  <img src={getInviteQrUrl(inviteLink)} alt="QR" className="h-32 w-32 rounded-lg" />
-                </div>
-                <div className="flex gap-2">
-                  <input readOnly value={inviteLink} className="app-input flex-1 text-[10px]" />
-                  <button onClick={copyLink} className="rounded-xl border border-app-border px-3">
-                    {copied ? <Check className="h-4 w-4 text-app-green" /> : <Copy className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -158,6 +153,12 @@ export default function ProfileMenu({ user, open, onClose }: ProfileMenuProps) {
         userId={user.id}
         open={showMessages}
         onClose={() => { setShowMessages(false); setMsgKey((k) => k + 1); refreshUser(); }}
+      />
+      <InviteModal
+        open={showInvite}
+        onClose={() => setShowInvite(false)}
+        userId={user.id}
+        inviteLink={inviteLink}
       />
     </>
   );

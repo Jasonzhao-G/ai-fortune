@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=18 <=22"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "NEXT_SWC_PATH=./node_modules/@next/swc-wasm-nodejs next dev",

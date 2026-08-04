@@ -104,3 +104,22 @@
   50% { opacity: 0.6; }
 }
 .animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+
+@keyframes spirit-pet-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.05); }
+}
+.spirit-pet-float { animation: spirit-pet-float 3s ease-in-out infinite; }
+
+@keyframes spirit-pet-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.spirit-pet-glow { animation: spirit-pet-glow 4s ease-in-out infinite; }
+
+@keyframes spirit-pet-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.spirit-pet-sparkle { animation: spirit-pet-sparkle 2s ease-in-out infinite; }
+.spirit-pet-sparkle-delay { animation: spirit-pet-sparkle 2s ease-in-out 1s infinite; }

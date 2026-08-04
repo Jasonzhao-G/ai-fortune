@@ -59,13 +59,20 @@ export default function PersonRecordsPage() {
 }
 
 function RecordDetail({ record }: { record: CalcRecord }) {
-  const data = record.data as Record<string, unknown>;
+  const data = (record.data && typeof record.data === "object" ? record.data : {}) as Record<string, unknown>;
 
   if (record.type === "lifekline") {
-    const birthInfo = data.birthInfo as BirthInfo;
-    const kline = data.kline as KlineData[];
-    const overall = data.overall as OverallAnalysis;
+    const birthInfo = data.birthInfo as BirthInfo | undefined;
+    const kline = Array.isArray(data.kline) ? (data.kline as KlineData[]) : [];
+    const overall = data.overall as OverallAnalysis | undefined;
     const bazi = data.bazi as BaziResult | undefined;
+    if (!birthInfo || kline.length === 0 || !overall) {
+      return (
+        <div className="app-card">
+          <p className="text-xs text-app-muted">{record.summary || "记录数据不完整，无法展示图表"}</p>
+        </div>
+      );
+    }
     return (
       <div>
         <p className="mb-3 text-xs text-app-muted">{record.summary}</p>

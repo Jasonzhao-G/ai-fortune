@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import type { BirthInfo } from "@/lib/types";
-import { loadBirthInfo, saveBirthInfo } from "@/lib/birth-store";
+import { loadBirthInfo, saveBirthInfo, getEffectiveBirthInfo, formatBirthSummary } from "@/lib/birth-store";
+import { getActivePersonId, updateSavedPerson } from "@/lib/person-store";
 
 interface BirthFormProps {
   onSubmit: (info: BirthInfo) => void;
   loading?: boolean;
   submitLabel?: string;
   compact?: boolean;
+  /** 为 false 时不自动写入当前测算人（由 onSubmit 自行处理） */
+  syncActivePerson?: boolean;
 }
 
 export default function BirthForm({
@@ -16,6 +19,7 @@ export default function BirthForm({
   loading,
   submitLabel = "生成人生 K 线",
   compact,
+  syncActivePerson = true,
 }: BirthFormProps) {
   const now = new Date();
   const [name, setName] = useState("");
@@ -29,16 +33,20 @@ export default function BirthForm({
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = loadBirthInfo();
-    if (saved) {
-      setName(saved.name ?? "");
-      setYear(saved.year);
-      setMonth(saved.month);
-      setDay(saved.day);
-      setHour(saved.hour);
-      setMinute(saved.minute);
-      setGender(saved.gender);
-      setCalendar(saved.calendar ?? "solar");
+    try {
+      const saved = getEffectiveBirthInfo() ?? loadBirthInfo();
+      if (saved) {
+        setName(saved.name ?? "");
+        setYear(saved.year);
+        setMonth(saved.month);
+        setDay(saved.day);
+        setHour(saved.hour);
+        setMinute(saved.minute);
+        setGender(saved.gender);
+        setCalendar(saved.calendar ?? "solar");
+      }
+    } catch {
+      // ignore invalid stored birth info
     }
     setLoaded(true);
   }, []);
@@ -59,6 +67,12 @@ export default function BirthForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const info = saveBirthInfo(buildInfo());
+    if (syncActivePerson) {
+      const activeId = getActivePersonId();
+      if (activeId) {
+        updateSavedPerson(activeId, { birthInfo: info, name: info.name ?? (name || "测算人") });
+      }
+    }
     onSubmit(info);
   };
 

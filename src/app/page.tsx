@@ -4,10 +4,10 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   Sparkles, TrendingUp, MessageCircle, FileText, ScanEye, Users, Hexagon,
-  UserRound, ChevronRight, History,
+  UserRound, ChevronRight,
 } from "lucide-react";
 import {
-  DEMO_KLINE, DEMO_STATS, DEMO_BAZI, DEMO_AI_ASK, DEMO_XIANG, DEMO_LIUYAO, DEMO_REPORT,
+  DEMO_KLINE, DEMO_STATS, DEMO_BAZI, DEMO_AI_ASK, DEMO_XIANG, DEMO_LIUYAO, DEMO_REPORT, DEMO_SPIRIT_PET, DEMO_SPIRIT_PET_BREEDS,
 } from "@/lib/demo-data";
 
 const LifeklineChart = dynamic(() => import("@/components/LifeklineChart"), {
@@ -15,16 +15,21 @@ const LifeklineChart = dynamic(() => import("@/components/LifeklineChart"), {
   loading: () => <div className="h-[180px] animate-pulse rounded-xl bg-app-border/30" />,
 });
 
-const PRIMARY = [
+const PRIMARY_ROW1 = [
+  { href: "/spirit-pet", icon: Sparkles, label: "AI 灵宠", desc: "守护灵宠" },
   { href: "/lifekline", icon: TrendingUp, label: "人生K线", desc: "命势可视化" },
-  { href: "/ask", icon: MessageCircle, label: "问AI", desc: "智能解答" },
-  { href: "/master", icon: UserRound, label: "问真人大师", desc: "一对一咨询" },
+  { href: "/liuyao", icon: Hexagon, label: "AI六爻", desc: "卦象占卜" },
+];
+
+const PRIMARY_ROW2 = [
+  { href: "/lifekline", icon: Sparkles, label: "八字排盘", desc: "四柱八字" },
+  { href: "/xiang", icon: ScanEye, label: "AI看相", desc: "手相面相" },
 ];
 
 const SECONDARY = [
-  { href: "/lifekline", icon: Sparkles, label: "八字排盘" },
-  { href: "/xiang", icon: ScanEye, label: "AI看相" },
-  { href: "/liuyao", icon: Hexagon, label: "AI六爻" },
+  { href: "/ask", icon: MessageCircle, label: "问AI" },
+  { href: "/master", icon: UserRound, label: "问真人大师" },
+  { href: "/records", icon: FileText, label: "我的测算" },
   { href: "/community", icon: Users, label: "社区" },
   { href: "/lifekline", icon: FileText, label: "运势报告" },
 ];
@@ -49,13 +54,11 @@ export default function HomePage() {
 
   return (
     <div className="px-4 pb-6">
-      {/* 品牌区 */}
       <section className="mb-4 pt-2 text-center">
-        <h1 className="page-title text-2xl">AI K线</h1>
-        <p className="mt-1 text-xs text-app-muted">AI 驱动的人生 K 线命理可视化平台</p>
+        <h1 className="page-title text-2xl">AI 灵宠</h1>
+        <p className="mt-1 text-xs text-app-muted">AI 大模型驱动的灵宠陪伴 K 线命理可视化平台</p>
       </section>
 
-      {/* CTA */}
       <Link href="/lifekline" className="cta-banner mb-5 block">
         <p className="text-base font-bold text-white">马上测算我的人生 K 线！</p>
         <p className="mt-0.5 text-[11px] text-white/80">输入生辰八字 · 一键生成命势图表 →</p>
@@ -64,8 +67,8 @@ export default function HomePage() {
       {/* 核心功能 */}
       <section className="mb-5">
         <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-app-muted">核心功能</p>
-        <div className="grid grid-cols-3 gap-2">
-          {PRIMARY.map(({ href, icon: Icon, label, desc }) => (
+        <div className="mb-2 grid grid-cols-3 gap-2">
+          {PRIMARY_ROW1.map(({ href, icon: Icon, label, desc }) => (
             <Link key={label} href={href} className="module-card-featured !py-3">
               <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-app-accent/15">
                 <Icon className="h-5 w-5 text-app-accent" strokeWidth={1.8} />
@@ -75,18 +78,18 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          {PRIMARY_ROW2.map(({ href, icon: Icon, label, desc }) => (
+            <Link key={label} href={href} className="module-card-featured !py-3">
+              <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-app-gold/15">
+                <Icon className="h-5 w-5 text-app-gold" strokeWidth={1.8} />
+              </div>
+              <span className="text-xs font-semibold text-app-text">{label}</span>
+              <span className="mt-0.5 text-[10px] text-app-muted">{desc}</span>
+            </Link>
+          ))}
+        </div>
       </section>
-
-      <Link href="/records" className="app-card mb-6 flex items-center gap-3 border-app-gold/30">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-app-gold/15">
-          <History className="h-5 w-5 text-app-gold" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-app-text">我的测算</p>
-          <p className="text-[10px] text-app-muted">人生K线 · 问AI · 看相 · 六爻 · 真人大师</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-app-muted" />
-      </Link>
 
       {/* 更多服务 */}
       <section className="mb-6">
@@ -106,6 +109,31 @@ export default function HomePage() {
       {/* 功能示例 */}
       <section className="space-y-5">
         <p className="text-[10px] font-medium uppercase tracking-wider text-app-muted">功能示例</p>
+
+        {/* AI灵宠 */}
+        <div>
+          <DemoHeader title="AI 灵宠 · 示例" href="/spirit-pet" />
+          <div className="mb-2 grid grid-cols-5 gap-2">
+            {DEMO_SPIRIT_PET_BREEDS.map((b) => (
+              <div key={b.petName} className="app-card !p-2 text-center">
+                <p className="text-2xl">{b.petEmoji}</p>
+                <p className="mt-1 text-[9px] font-medium text-app-gold">{b.petName}</p>
+                <p className="text-[8px] text-app-muted">{b.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="app-card text-center">
+            <p className="text-4xl">{DEMO_SPIRIT_PET.petEmoji}</p>
+            <p className="mt-2 text-sm font-bold text-app-gold">{DEMO_SPIRIT_PET.petName}</p>
+            <p className="mt-1 text-[10px] text-app-muted">{DEMO_SPIRIT_PET.periodLabel}</p>
+            <p className="mt-2 text-xs leading-relaxed text-app-text">{DEMO_SPIRIT_PET.summary}</p>
+            <div className="mt-2 flex flex-wrap justify-center gap-1">
+              {DEMO_SPIRIT_PET.highlights.map((h) => (
+                <span key={h} className="rounded-full border border-app-border px-2 py-0.5 text-[10px] text-app-muted">{h}</span>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* 人生K线 */}
         <div>

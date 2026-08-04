@@ -119,6 +119,9 @@ export interface UserProfile {
   subscriptionExpiry?: string;
   /** 邀请奖励等赠送的使用期限 */
   trialExpiry?: string;
+  phone?: string;
+  email?: string;
+  registeredVia?: "phone" | "email" | "guest";
 }
 
 export interface UsageRecord {
@@ -147,12 +150,82 @@ export interface CommunityPost {
   favoritedBy: string[];
   commentCount: number;
   createdAt: string;
+  /** 运营加精华 → 显示在热门 */
+  isFeatured?: boolean;
   /** 社区内转发来源 */
   repostOf?: {
     postId: string;
     nickname: string;
     content: string;
   };
+  /** 转发记录：原帖 ID */
+  repostSourceId?: string;
+  /** 帖子图片（最多 4 张） */
+  images?: string[];
+}
+
+export interface CommunityUser {
+  id: string;
+  nickname: string;
+  avatar: string;
+}
+
+export interface DmThread {
+  id: string;
+  userA: string;
+  userB: string;
+  status: "pending" | "active" | "rejected";
+  initiatedBy: string;
+  lastMessageAt: string;
+  createdAt: string;
+}
+
+export interface DmMessage {
+  id: string;
+  threadId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface SavedPerson {
+  id: string;
+  name: string;
+  birthInfo: BirthInfo;
+  createdAt: string;
+  /** 主测算人「我」· 必填，用于灵宠与命格建议 */
+  isPrimary?: boolean;
+}
+
+export type SpiritPetPeriod =
+  | "day" | "month" | "year" | "nextYear"
+  | "3y" | "5y" | "10y" | "20y";
+
+export interface SpiritPetProfile {
+  personKey: string;
+  breedId: string;
+  baseName: string;
+  fullName: string;
+  emoji: string;
+  element: "金" | "木" | "水" | "火" | "土";
+  elementColor: string;
+  category: "zodiac" | "constellation" | "mythical";
+  zodiacAnimal?: string;
+  constellation?: string;
+  reason: string;
+  baziText: string;
+  avatarDataUrl?: string;
+  createdAt: string;
+}
+
+export interface SpiritPetAdvice {
+  period: SpiritPetPeriod;
+  periodLabel: string;
+  petName: string;
+  petEmoji: string;
+  summary: string;
+  sections: { label: string; text: string }[];
+  petGreeting?: string;
 }
 
 export interface CommunityComment {
@@ -163,9 +236,11 @@ export interface CommunityComment {
   avatar: string;
   content: string;
   createdAt: string;
+  /** 评论配图 */
+  imageUrl?: string;
 }
 
-export type MessageType = "like" | "comment" | "reply" | "master";
+export type MessageType = "like" | "comment" | "reply" | "master" | "follow_post" | "dm_request" | "dm" | "repost" | "gift_food";
 
 export interface AppMessage {
   id: string;
@@ -174,6 +249,7 @@ export interface AppMessage {
   title: string;
   content: string;
   relatedPostId?: string;
+  relatedUserId?: string;
   read: boolean;
   createdAt: string;
 }
