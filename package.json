@@ -6,7 +6,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "dev": "NEXT_SWC_PATH=./node_modules/@next/swc-wasm-nodejs next dev",
+    "dev": "NEXT_SWC_PATH=./node_modules/@next/swc-wasm-nodejs next dev -p 3000",
+    "dev:clean": "pkill -f 'next dev' 2>/dev/null || true; lsof -ti:3000,3001 2>/dev/null | xargs kill -9 2>/dev/null || true; sleep 1; rm -rf .next && NEXT_SWC_PATH=./node_modules/@next/swc-wasm-nodejs next dev -p 3000",
     "build": "NEXT_SWC_PATH=./node_modules/@next/swc-wasm-nodejs next build",
     "start": "next start",
     "lint": "next lint"

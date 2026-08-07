@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import {
   ComposedChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, LabelList,
   ResponsiveContainer, CartesianGrid, Cell, ReferenceLine, Customized,
@@ -99,13 +99,34 @@ export default function LifeklineChart({
   showBack,
   onBack,
 }: LifeklineChartProps) {
+  const [mounted, setMounted] = useState(false);
+  const [chartReady, setChartReady] = useState(false);
   const [chartMode, setChartMode] = useState<"kline" | "line">("kline");
   const [fullscreen, setFullscreen] = useState(false);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const isLifeFull = viewMode === "life" && data.length > 50;
   const hasTopMarkers = data.some((d) => getTopMarkerLabel(d, viewMode));
   const height = compact ? 210 : fullscreen ? 480 : 320;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !containerRef.current) return;
+    const el = containerRef.current;
+    const check = () => {
+      const { width, height: h } = el.getBoundingClientRect();
+      setChartReady(width > 0 && h > 0);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mounted, height]);
+
   const labelFontSize = data.length > 50 ? 6 : data.length > 20 ? 7 : 9;
   const bottomMargin = data.length > 50 ? 40 : data.length > 15 ? 36 : 28;
   const topMargin = hasTopMarkers ? 42 : 16;
@@ -202,7 +223,9 @@ export default function LifeklineChart({
           <p className="text-xs text-app-muted">暂无 K 线数据</p>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={height}>
+        <div ref={containerRef} className="w-full min-w-0" style={{ height }}>
+          {chartReady ? (
+          <ResponsiveContainer width="100%" height="100%">
           {chartMode === "kline" ? (
             <ComposedChart
               data={chartData}
@@ -270,7 +293,11 @@ export default function LifeklineChart({
                 activeDot={{ r: 4, onClick: (_, e) => handleBarPress((e as { index?: number }).index ?? 0) }} />
             </LineChart>
           )}
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+          ) : (
+            <div className="h-full animate-pulse rounded-xl bg-app-border/30" />
+          )}
+        </div>
       )}
 
       {!empty && data.length > 0 && (
@@ -288,7 +315,13 @@ export default function LifeklineChart({
 
   return (
     <>
-      <div className={compact ? "app-card !p-3" : "app-card !p-3"}>{chartContent}</div>
+      <div className={compact ? "app-card !p-3" : "app-card !p-3"}>
+        {!mounted ? (
+          <div className="animate-pulse rounded-xl bg-app-border/30" style={{ height: compact ? 210 : 320 }} />
+        ) : (
+          chartContent
+        )}
+      </div>
       {fullscreen && (
         <div className="fixed inset-0 z-[60] flex flex-col bg-app-bg p-4">
           <div className="mb-2 flex justify-between">

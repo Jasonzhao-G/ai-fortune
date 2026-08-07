@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { X } from "lucide-react";
 import {
   getPetFoodBalance, getTotalUses, getGiftedBags, getPurchasedBags,
   hasUnlimitedAccess, USES_PER_BAG,
 } from "@/lib/pet-food-store";
 import BuyFoodModal from "@/components/BuyFoodModal";
+import { SpiritGourdHeading } from "@/components/icons/SpiritGourdIcon";
 
 interface PetFoodPanelProps {
   open: boolean;
@@ -42,7 +44,9 @@ export default function PetFoodPanel({ open, onClose, userId, onRefresh }: PetFo
           <button onClick={onClose} className="absolute right-4 top-4">
             <X className="h-5 w-5 text-app-muted" />
           </button>
-          <h2 className="mb-4 text-base font-semibold text-app-text">🍖 我的灵粮</h2>
+          <h2 className="mb-4 text-base font-semibold text-app-text">
+            <SpiritGourdHeading>我的灵丹</SpiritGourdHeading>
+          </h2>
 
           <div className="mb-4 rounded-xl border border-app-gold/30 bg-app-gold/5 p-4 text-center">
             {unlimited ? (
@@ -62,21 +66,21 @@ export default function PetFoodPanel({ open, onClose, userId, onRefresh }: PetFo
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between rounded-lg border border-app-border px-3 py-2">
-              <span className="text-app-muted">赠送的灵粮</span>
+              <span className="text-app-muted">赠送的灵丹</span>
               <span className="text-app-text">
-                {giftedBags} 袋{partialGift > 0 ? ` + ${partialGift} 次` : ""}
+                {giftedBags} 瓶{partialGift > 0 ? ` + ${partialGift} 次` : ""}
               </span>
             </div>
             <div className="flex justify-between rounded-lg border border-app-border px-3 py-2">
-              <span className="text-app-muted">购买的灵粮</span>
+              <span className="text-app-muted">购买的灵丹</span>
               <span className="text-app-text">
-                {purchasedBags} 袋{partialPurch > 0 ? ` + ${partialPurch} 次` : ""}
+                {purchasedBags} 瓶{partialPurch > 0 ? ` + ${partialPurch} 次` : ""}
               </span>
             </div>
             <div className="flex justify-between rounded-lg border border-app-gold/30 bg-app-gold/5 px-3 py-2">
-              <span className="text-app-gold">灵粮总额</span>
+              <span className="text-app-gold">灵丹总额</span>
               <span className="font-medium text-app-gold">
-                {unlimited ? "无限" : `${giftedBags + purchasedBags} 袋 + ${partialGift + partialPurch} 次`}
+                {unlimited ? "无限" : `${giftedBags + purchasedBags} 瓶 + ${partialGift + partialPurch} 次`}
               </span>
             </div>
           </div>
@@ -87,7 +91,7 @@ export default function PetFoodPanel({ open, onClose, userId, onRefresh }: PetFo
             </p>
           )}
 
-          <button onClick={() => setBuyOpen(true)} className="app-btn mt-4">买粮</button>
+          <Link href="/shop/category/food" onClick={onClose} className="app-btn mt-4">去商城买粮</Link>
         </div>
       </div>
 

@@ -1,33 +1,38 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
-  Sparkles, TrendingUp, MessageCircle, FileText, ScanEye, Users, Hexagon,
-  UserRound, ChevronRight,
+  Sparkles, TrendingUp, MessageCircle, FileText, Users,
+  UserRound, ChevronRight, ShoppingBag, Hand, Sun,
 } from "lucide-react";
+import HomeKlinePreview from "@/components/HomeKlinePreview";
+import PageCarouselBanner from "@/components/PageCarouselBanner";
+import HexagramIconMini from "@/components/icons/HexagramIconMini";
+import PrimaryPersonModal from "@/components/PrimaryPersonModal";
+import { BRAND_SLOGAN_LINES } from "@/lib/brand";
+import { PAGE_BANNERS } from "@/lib/page-banners";
+import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import {
   DEMO_KLINE, DEMO_STATS, DEMO_BAZI, DEMO_AI_ASK, DEMO_XIANG, DEMO_LIUYAO, DEMO_REPORT, DEMO_SPIRIT_PET, DEMO_SPIRIT_PET_BREEDS,
 } from "@/lib/demo-data";
 
-const LifeklineChart = dynamic(() => import("@/components/LifeklineChart"), {
-  ssr: false,
-  loading: () => <div className="h-[180px] animate-pulse rounded-xl bg-app-border/30" />,
-});
-
 const PRIMARY_ROW1 = [
-  { href: "/spirit-pet", icon: Sparkles, label: "AI 灵宠", desc: "守护灵宠" },
+  { href: "/spirit-pet", emoji: "🦄", label: "AI 灵宠", desc: "守护灵宠" },
   { href: "/lifekline", icon: TrendingUp, label: "人生K线", desc: "命势可视化" },
-  { href: "/liuyao", icon: Hexagon, label: "AI六爻", desc: "卦象占卜" },
+  { href: "/liuyao", hexagram: true, label: "AI六爻", desc: "卦象占卜" },
 ];
 
 const PRIMARY_ROW2 = [
-  { href: "/lifekline", icon: Sparkles, label: "八字排盘", desc: "四柱八字" },
-  { href: "/xiang", icon: ScanEye, label: "AI看相", desc: "手相面相" },
+  { href: "/lifekline?tab=bazi", icon: Sparkles, label: "八字排盘", desc: "四柱八字" },
+  { href: "/xiang", icon: Hand, label: "AI看相", desc: "手相面相" },
+  { type: "fortune-guide" as const, icon: Sun, label: "今日运势指引", desc: "每日运势" },
 ];
 
 const SECONDARY = [
-  { href: "/ask", icon: MessageCircle, label: "问AI" },
+  { href: "/shop", icon: ShoppingBag, label: "灵宠商城" },
+  { href: "/ask?from=spirit-pet", icon: MessageCircle, label: "问AI灵宠" },
   { href: "/master", icon: UserRound, label: "问真人大师" },
   { href: "/records", icon: FileText, label: "我的测算" },
   { href: "/community", icon: Users, label: "社区" },
@@ -36,9 +41,9 @@ const SECONDARY = [
 
 function DemoHeader({ title, href }: { title: string; href: string }) {
   return (
-    <div className="mb-2 flex items-center justify-between">
-      <p className="text-xs font-medium text-app-text">{title}</p>
-      <Link href={href} className="flex items-center gap-0.5 text-[10px] text-app-accent">
+    <div className="section-card-header !mb-2">
+      <p className="subsection-title">{title}</p>
+      <Link href={href} className="caption flex items-center gap-0.5 text-app-accent">
         去体验 <ChevronRight className="h-3 w-3" />
       </Link>
     </div>
@@ -46,6 +51,17 @@ function DemoHeader({ title, href }: { title: string; href: string }) {
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  const [primaryModalOpen, setPrimaryModalOpen] = useState(false);
+
+  const goDailyFortuneGuide = () => {
+    if (!ensurePrimaryPersonBeforeCalc()) {
+      setPrimaryModalOpen(true);
+      return;
+    }
+    router.push("/ask?from=spirit-pet&section=daily-fortune");
+  };
+
   const demoKline = DEMO_KLINE.map((d) => ({
     ...d,
     isCurrent: d.year === 2026,
@@ -53,67 +69,103 @@ export default function HomePage() {
   }));
 
   return (
-    <div className="px-4 pb-6">
-      <section className="mb-4 pt-2 text-center">
-        <h1 className="page-title text-2xl">AI 灵宠</h1>
-        <p className="mt-1 text-xs text-app-muted">AI 大模型驱动的灵宠陪伴 K 线命理可视化平台</p>
+    <div className="pb-6">
+      <section className="page-section pt-2 text-center">
+        {BRAND_SLOGAN_LINES.map((line, i) => (
+          <p key={line} className={i === 0 ? "heading-1" : "page-subtitle mt-1"}>{line}</p>
+        ))}
       </section>
 
-      <Link href="/lifekline" className="cta-banner mb-5 block">
-        <p className="text-base font-bold text-white">马上测算我的人生 K 线！</p>
-        <p className="mt-0.5 text-[11px] text-white/80">输入生辰八字 · 一键生成命势图表 →</p>
+      <PageCarouselBanner slides={PAGE_BANNERS.home} className="!mb-4 !pt-0" />
+
+      <Link href="/lifekline" className="app-btn-gold app-btn-sm mb-3 flex items-center justify-center gap-2">
+        马上测算我的人生 K 线！
       </Link>
 
       {/* 核心功能 */}
-      <section className="mb-5">
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-app-muted">核心功能</p>
+      <section className="page-section">
+        <p className="section-label">核心功能</p>
         <div className="mb-2 grid grid-cols-3 gap-2">
-          {PRIMARY_ROW1.map(({ href, icon: Icon, label, desc }) => (
-            <Link key={label} href={href} className="module-card-featured !py-3">
+          {PRIMARY_ROW1.map((item) => {
+            const Icon = "icon" in item ? item.icon : null;
+            return (
+            <Link key={item.label} href={item.href} className="module-card-featured !py-3">
               <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-app-accent/15">
-                <Icon className="h-5 w-5 text-app-accent" strokeWidth={1.8} />
+                {"emoji" in item && item.emoji ? (
+                  <span className="text-2xl leading-none">{item.emoji}</span>
+                ) : "hexagram" in item && item.hexagram ? (
+                  <HexagramIconMini className="text-app-accent" />
+                ) : Icon ? (
+                  <Icon className="h-5 w-5 text-app-accent" strokeWidth={1.8} />
+                ) : null}
               </div>
-              <span className="text-xs font-semibold text-app-text">{label}</span>
-              <span className="mt-0.5 text-[10px] text-app-muted">{desc}</span>
+              <span className="caption font-semibold text-app-text">{item.label}</span>
+              <span className="micro mt-0.5">{item.desc}</span>
             </Link>
-          ))}
+            );
+          })}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {PRIMARY_ROW2.map(({ href, icon: Icon, label, desc }) => (
-            <Link key={label} href={href} className="module-card-featured !py-3">
-              <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-app-gold/15">
-                <Icon className="h-5 w-5 text-app-gold" strokeWidth={1.8} />
-              </div>
-              <span className="text-xs font-semibold text-app-text">{label}</span>
-              <span className="mt-0.5 text-[10px] text-app-muted">{desc}</span>
-            </Link>
-          ))}
+        <div className="grid grid-cols-3 gap-2">
+          {PRIMARY_ROW2.map((item) => {
+            if ("type" in item && item.type === "fortune-guide") {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={goDailyFortuneGuide}
+                  className="module-card-featured !py-3 text-left"
+                >
+                  <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-app-gold/15">
+                    <Icon className="h-5 w-5 text-app-gold" strokeWidth={1.8} />
+                  </div>
+                  <span className="caption font-semibold text-app-text">{item.label}</span>
+                  <span className="micro mt-0.5">{item.desc}</span>
+                </button>
+              );
+            }
+            const Icon = item.icon;
+            return (
+              <Link key={item.label} href={item.href} className="module-card-featured !py-3">
+                <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-app-gold/15">
+                  <Icon className="h-5 w-5 text-app-gold" strokeWidth={1.8} />
+                </div>
+                <span className="caption font-semibold text-app-text">{item.label}</span>
+                <span className="micro mt-0.5">{item.desc}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
+      <Link href="/spirit-pet" className="app-btn-gold app-btn-sm mb-5 flex items-center justify-center gap-2">
+        <span className="text-base">🦄</span>
+        马上收养我的第一只灵宠！
+      </Link>
+
       {/* 更多服务 */}
-      <section className="mb-6">
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-app-muted">更多服务</p>
-        <div className="grid grid-cols-5 gap-2">
+      <section className="page-section">
+        <p className="section-label">更多服务</p>
+        <div className="grid grid-cols-3 gap-2">
           {SECONDARY.map(({ href, icon: Icon, label }) => (
             <Link key={label} href={href} className="module-card !p-2">
               <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-app-bg">
                 <Icon className="h-3.5 w-3.5 text-app-gold" strokeWidth={1.8} />
               </div>
-              <span className="text-[10px] text-app-text">{label}</span>
+              <span className="micro text-app-text">{label}</span>
             </Link>
           ))}
         </div>
       </section>
 
       {/* 功能示例 */}
-      <section className="space-y-5">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-app-muted">功能示例</p>
+      <section className="page-section space-y-5">
+        <p className="section-label">功能示例</p>
 
         {/* AI灵宠 */}
         <div>
           <DemoHeader title="AI 灵宠 · 示例" href="/spirit-pet" />
-          <div className="mb-2 grid grid-cols-5 gap-2">
+          <div className="mb-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
             {DEMO_SPIRIT_PET_BREEDS.map((b) => (
               <div key={b.petName} className="app-card !p-2 text-center">
                 <p className="text-2xl">{b.petEmoji}</p>
@@ -138,7 +190,7 @@ export default function HomePage() {
         {/* 人生K线 */}
         <div>
           <DemoHeader title="人生 K 线 · 示例" href="/lifekline" />
-          <LifeklineChart data={demoKline} compact />
+          <HomeKlinePreview data={demoKline} />
           <div className="mt-2 grid grid-cols-3 gap-2">
             {[
               { label: "今年", value: DEMO_STATS.thisYear },
@@ -155,7 +207,7 @@ export default function HomePage() {
 
         {/* 八字排盘 */}
         <div>
-          <DemoHeader title="八字排盘 · 示例" href="/lifekline" />
+          <DemoHeader title="八字排盘 · 示例" href="/lifekline?tab=bazi" />
           <div className="app-card">
             <div className="mb-3 grid grid-cols-4 gap-2 text-center">
               {DEMO_BAZI.pillars.map((p, i) => (
@@ -171,9 +223,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 问AI */}
+        {/* 问AI灵宠 */}
         <div>
-          <DemoHeader title="问 AI · 示例" href="/ask" />
+          <DemoHeader title="问AI灵宠 · 示例" href="/ask?from=spirit-pet" />
           <div className="app-card space-y-2">
             <div className="rounded-xl bg-app-bg px-3 py-2">
               <p className="text-[10px] text-app-muted">你问</p>
@@ -240,7 +292,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <p className="mt-6 text-center text-[10px] text-app-muted">仅供娱乐参考 · 不构成决策建议</p>
+      <p className="caption mt-6 text-center">仅供娱乐参考 · 不构成决策建议</p>
+
+      <PrimaryPersonModal open={primaryModalOpen} onClose={() => setPrimaryModalOpen(false)} />
     </div>
   );
 }

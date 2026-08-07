@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { X, Gift, Sparkles, Sun, Moon, Globe, Mail, Info, Bell, History, UserPen } from "lucide-react";
+import { X, Gift, Sparkles, Globe, Mail, Info, Bell, History, UserPen, Palette, ShoppingBag } from "lucide-react";
+import SpiritGourdIcon from "@/components/icons/SpiritGourdIcon";
 import { useApp } from "@/context/AppContext";
 import type { UserProfile } from "@/lib/types";
 import { getInviteLink } from "@/lib/user-store";
 import { getTotalUses, getPetFoodBalance, hasUnlimitedAccess } from "@/lib/pet-food-store";
+import { UI_THEMES } from "@/lib/ui-themes";
 import ContactModal from "@/components/ContactModal";
 import MessagesPanel, { useUnreadCount } from "@/components/MessagesPanel";
 import InviteModal from "@/components/InviteModal";
@@ -16,16 +18,25 @@ interface ProfileMenuProps {
   open: boolean;
   onClose: () => void;
   onEditProfile?: () => void;
-  onOpenPetFood?: () => void;
 }
 
-export default function ProfileMenu({ user, open, onClose, onEditProfile, onOpenPetFood }: ProfileMenuProps) {
-  const { theme, setTheme, locale, setLocale, refreshUser } = useApp();
+export default function ProfileMenu({ user, open, onClose, onEditProfile }: ProfileMenuProps) {
+  const { uiTheme, setUiTheme, locale, setLocale, refreshUser } = useApp();
   const [showInvite, setShowInvite] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [msgKey, setMsgKey] = useState(0);
   const unread = useUnreadCount(user.id, msgKey);
+
+  useEffect(() => {
+    if (open) setMsgKey((k) => k + 1);
+  }, [open]);
+
+  useEffect(() => {
+    const refresh = () => setMsgKey((k) => k + 1);
+    window.addEventListener("messages-updated", refresh);
+    return () => window.removeEventListener("messages-updated", refresh);
+  }, []);
 
   if (!open) return null;
 
@@ -37,8 +48,8 @@ export default function ProfileMenu({ user, open, onClose, onEditProfile, onOpen
     foodBalance = { giftedUses: 5, purchasedUses: 0 };
   }
   const foodLabel = hasUnlimitedAccess(foodBalance)
-    ? "无限灵粮"
-    : `${getTotalUses(foodBalance)} 次灵粮`;
+    ? "无限灵丹"
+    : `${getTotalUses(foodBalance)} 次灵丹`;
 
   return (
     <>
@@ -61,9 +72,13 @@ export default function ProfileMenu({ user, open, onClose, onEditProfile, onOpen
                 {user.subscription && (
                   <span className="mt-1 inline-block rounded-full bg-app-accent/20 px-2 py-0.5 text-[10px] text-app-accent">会员</span>
                 )}
-                <button onClick={onOpenPetFood} className="mt-1 inline-block rounded-full bg-app-gold/20 px-2 py-0.5 text-[10px] text-app-gold">
-                  🍖 {foodLabel}
-                </button>
+                <Link
+                  href="/shop/category/food"
+                  onClick={onClose}
+                  className="mt-1 inline-flex items-center gap-1 rounded-full bg-app-gold/20 px-2 py-0.5 text-[10px] text-app-gold"
+                >
+                  <SpiritGourdIcon className="h-3 w-3 text-app-gold" /> {foodLabel}
+                </Link>
               </div>
             </div>
             {onEditProfile && (
@@ -76,13 +91,18 @@ export default function ProfileMenu({ user, open, onClose, onEditProfile, onOpen
           <div className="p-2">
             <button
               onClick={() => { setShowMessages(true); refreshUser(); }}
-              className="menu-item"
+              className="menu-item relative"
             >
-              <Bell className="h-4 w-4 text-app-accent" />
+              <span className="relative inline-flex">
+                <Bell className="h-4 w-4 text-app-accent" />
+                {unread > 0 && (
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-app-card" />
+                )}
+              </span>
               消息
               {unread > 0 && (
-                <span className="ml-auto rounded-full bg-app-accent px-1.5 py-0.5 text-[10px] text-white">
-                  {unread}
+                <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] text-white">
+                  {unread > 99 ? "99+" : unread}
                 </span>
               )}
             </button>
@@ -92,9 +112,14 @@ export default function ProfileMenu({ user, open, onClose, onEditProfile, onOpen
               我的测算
             </Link>
 
-            <Link href="/community/me" onClick={onClose} className="menu-item">
+            <Link href="/shop" onClick={onClose} className="menu-item">
+              <ShoppingBag className="h-4 w-4 text-app-gold" />
+              灵宠商城
+            </Link>
+
+            <Link href="/community" onClick={onClose} className="menu-item">
               <Sparkles className="h-4 w-4 text-app-accent" />
-              社区个人中心
+              社区
             </Link>
 
             <Link href="/spirit-pet" onClick={onClose} className="menu-item">
@@ -111,15 +136,28 @@ export default function ProfileMenu({ user, open, onClose, onEditProfile, onOpen
 
             <div className="my-2 border-t border-app-border" />
 
-            <p className="px-4 py-1 text-[10px] text-app-muted">主题模式</p>
-            <div className="flex gap-2 px-4 pb-2">
-              {(["dark", "light"] as const).map((t) => (
-                <button key={t} onClick={() => setTheme(t)}
-                  className={`flex flex-1 items-center justify-center gap-1 rounded-xl border py-2 text-xs ${
-                    theme === t ? "border-app-accent text-app-accent" : "border-app-border text-app-muted"
-                  }`}>
-                  {t === "dark" ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
-                  {t === "dark" ? "深色" : "浅色"}
+            <Link href="/theme-preview" onClick={onClose} className="menu-item">
+              <Palette className="h-4 w-4 text-app-accent" />
+              界面风格
+              <span className="ml-auto text-[11px] text-app-muted">
+                {UI_THEMES.find((t) => t.id === uiTheme)?.name}
+              </span>
+            </Link>
+
+            <p className="px-4 py-1 text-[10px] text-app-muted">快速切换</p>
+            <div className="grid grid-cols-2 gap-1.5 px-4 pb-2">
+              {UI_THEMES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setUiTheme(t.id)}
+                  className={`rounded-xl border py-2 text-[11px] font-medium transition-colors ${
+                    uiTheme === t.id
+                      ? "border-app-accent bg-app-accent/10 text-app-accent"
+                      : "border-app-border text-app-muted"
+                  }`}
+                >
+                  {t.name}
                 </button>
               ))}
             </div>

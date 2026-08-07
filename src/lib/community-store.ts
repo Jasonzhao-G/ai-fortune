@@ -127,7 +127,18 @@ export function addPost(content: string, images?: string[]): CommunityPost {
     });
   });
 
+  tryGrantCommunitySpiritPower("communityPost");
   return post;
+}
+
+/** 延迟加载，避免 community-store ↔ spirit-pet 循环依赖影响首页 */
+function tryGrantCommunitySpiritPower(
+  taskId: "communityPost" | "communityComment" | "communityLike" | "communityRepost" | "communityFavorite" | "communityFollow",
+) {
+  if (typeof window === "undefined") return;
+  import("./spirit-pet-tasks")
+    .then((m) => m.tryGrantCommunitySpiritPower(taskId))
+    .catch(() => { /* ignore */ });
 }
 
 export function toggleLike(postId: string): void {
@@ -148,6 +159,7 @@ export function toggleLike(postId: string): void {
         relatedPostId: p.id,
       });
     }
+    if (!liked) tryGrantCommunitySpiritPower("communityLike");
     return { ...p, likedBy: nextLikedBy, likes: nextLikedBy.length };
   });
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
@@ -162,6 +174,7 @@ export function toggleFavorite(postId: string): void {
     const nextFavoritedBy = favorited
       ? favoritedBy.filter((id) => id !== user.id)
       : [...favoritedBy, user.id];
+    if (!favorited) tryGrantCommunitySpiritPower("communityFavorite");
     return { ...p, favoritedBy: nextFavoritedBy };
   });
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
@@ -198,6 +211,7 @@ export function addComment(postId: string, content: string, imageUrl?: string): 
     return { ...p, commentCount: p.commentCount + 1 };
   });
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+  tryGrantCommunitySpiritPower("communityComment");
   return comment;
 }
 
@@ -254,6 +268,7 @@ export function repostPost(source: CommunityPost): CommunityPost {
       relatedPostId: source.id,
     });
   }
+  tryGrantCommunitySpiritPower("communityRepost");
   return post;
 }
 
@@ -279,6 +294,7 @@ export function toggleFollow(targetUserId: string): boolean {
     ? [...following, targetUserId]
     : following.filter((id) => id !== targetUserId);
   saveFollowMap(map);
+  if (isNow) tryGrantCommunitySpiritPower("communityFollow");
   return isNow;
 }
 

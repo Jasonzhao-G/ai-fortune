@@ -28,35 +28,46 @@ export const DEMO_AI_ASK = {
 };
 
 export const DEMO_SPIRIT_PET_BREEDS = [
-  { petName: "火麒麟", petEmoji: "🦄", label: "祥瑞神兽" },
-  { petName: "灵龟", petEmoji: "🐢", label: "长寿灵宠" },
-  { petName: "金蛇", petEmoji: "🐍", label: "智慧灵蛇" },
-  { petName: "吉牛", petEmoji: "🐮", label: "福运灵牛" },
-  { petName: "独角兽", petEmoji: "🦄", label: "西方灵兽" },
+  { petName: "九尾狐", petEmoji: "🦊", label: "情感陪伴" },
+  { petName: "青龙", petEmoji: "🐲", label: "事业进取" },
+  { petName: "月兔", petEmoji: "🐰", label: "治愈疗愈" },
+  { petName: "凤凰", petEmoji: "🦚", label: "重启成长" },
+  { petName: "白泽", petEmoji: "🦄", label: "智慧指引" },
+  { petName: "招财猫", petEmoji: "🐱", label: "财富行动" },
 ];
 
 export const DEMO_SPIRIT_PET = {
-  petName: DEMO_SPIRIT_PET_BREEDS[0].petName,
-  petEmoji: DEMO_SPIRIT_PET_BREEDS[0].petEmoji,
+  petName: "青丘狐",
+  petEmoji: "🦊",
   personName: "演示用户",
-  periodLabel: "本年建议",
-  summary: "主人～根据您的命格，本年宜进取。只要您听从我的建议，有我的守护，保您无忧哦～",
-  highlights: ["穿搭：朱红系", "吉位：东南", "吉祥物：火麒麟意象"],
-  reason: "按照八字庚午 辛巳 甲子，日主甲木，五行偏火，最配命格的守护灵宠是【火麒麟】。",
+  periodLabel: "今日灵签",
+  summary: "主人你好～今天你的木元素比较旺，适合沟通和表达，不建议冲动消费。",
+  highlights: ["穿搭：墨绿系", "吉位：东南", "命理翻译：七杀旺→竞争意识强"],
+  reason: "根据命格综合分析，你的守护灵是一只青丘狐。",
 };
 
 export const DEMO_SPIRIT_PET_PROFILE: SpiritPetProfile = {
   personKey: "demo",
-  breedId: "qilin",
-  baseName: "火麒麟",
-  fullName: "火麒麟",
-  emoji: DEMO_SPIRIT_PET.petEmoji,
-  element: "火",
-  elementColor: "#c45c48",
+  breedId: "jiuwei",
+  baseName: "九尾狐",
+  fullName: "青丘狐",
+  emoji: "🦊",
+  element: "木",
+  elementColor: "#5a8a7a",
   category: "mythical",
+  companionKeywords: "智慧、温柔、情感洞察",
+  companionNeed: "love",
   reason: DEMO_SPIRIT_PET.reason,
   baziText: "庚午 辛巳 甲子 · 示例",
   createdAt: "2020-01-01T00:00:00.000Z",
+  level: 1,
+  spiritPower: 0,
+  claimed: true,
+  destinyInsights: [
+    "根据您的命格综合分析，你的守护灵是一只青丘狐。",
+    "木行偏弱，灵宠会帮你增强成长动力与表达欲。",
+    "你内心敏感细腻，它会用温柔方式接住你的情绪。",
+  ],
 };
 
 export const DEMO_SPIRIT_PET_ADVICE: SpiritPetAdvice = {

@@ -45,6 +45,9 @@ export function addMessage(msg: Omit<AppMessage, "id" | "createdAt" | "read">): 
   const all = loadMessages();
   all.unshift(item);
   saveMessages(all);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("messages-updated"));
+  }
   return item;
 }
 

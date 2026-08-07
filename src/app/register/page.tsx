@@ -100,7 +100,7 @@ export default function RegisterPage() {
         <span className="text-3xl">{BRAND_LOGO}</span>
         <h1 className="page-title mt-2">注册 {BRAND_NAME}</h1>
         <p className="text-xs text-app-muted">
-          {refCode ? "好友邀请您加入，注册即享灵粮礼包" : "创建账号，开启命理之旅"}
+          {refCode ? "好友邀请您加入，注册即享灵丹礼包" : "创建账号，开启命理之旅"}
         </p>
       </div>
 

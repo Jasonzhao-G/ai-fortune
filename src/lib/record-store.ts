@@ -27,7 +27,7 @@ export interface PersonGroup {
 
 const TYPE_LABELS: Record<RecordType, string> = {
   lifekline: "人生K线",
-  aiAsk: "问AI",
+  aiAsk: "问AI灵宠",
   master: "问真人大师",
   xiang: "AI看相",
   liuyao: "AI六爻",

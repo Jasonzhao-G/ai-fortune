@@ -24,6 +24,10 @@ export interface BirthInfo {
   name?: string;
   /** 阳历 solar / 农历 lunar */
   calendar?: "solar" | "lunar";
+  /** 出生地点 */
+  birthPlace?: string;
+  /** 性格偏好 / 陪伴需求 */
+  personalityPreference?: string;
 }
 
 export interface BaziResult {
@@ -201,6 +205,11 @@ export type SpiritPetPeriod =
   | "day" | "month" | "year" | "nextYear"
   | "3y" | "5y" | "10y" | "20y";
 
+export type SpiritPetCompanionNeed =
+  | "love" | "wealth" | "growth" | "career" | "companionship"
+  | "wisdom" | "luck" | "expression" | "stability" | "action"
+  | "dreams" | "healing";
+
 export interface SpiritPetProfile {
   personKey: string;
   breedId: string;
@@ -209,13 +218,25 @@ export interface SpiritPetProfile {
   emoji: string;
   element: "金" | "木" | "水" | "火" | "土";
   elementColor: string;
-  category: "zodiac" | "constellation" | "mythical";
+  category: "mythical";
   zodiacAnimal?: string;
   constellation?: string;
   reason: string;
   baziText: string;
   avatarDataUrl?: string;
   createdAt: string;
+  /** 陪伴关键词，如「智慧、温柔、情感洞察」 */
+  companionKeywords?: string;
+  /** 用户需求标签 */
+  companionNeed?: SpiritPetCompanionNeed;
+  /** 觉醒等级 Lv1–100 */
+  level?: number;
+  /** 灵力值（通过陪伴行为积累，非充值） */
+  spiritPower?: number;
+  /** 是否已完成领取仪式 */
+  claimed?: boolean;
+  /** 命格解读要点（多条） */
+  destinyInsights?: string[];
 }
 
 export interface SpiritPetAdvice {

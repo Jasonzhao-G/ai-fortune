@@ -12,6 +12,8 @@ import { useApp } from "@/context/AppContext";
 import { DEMO_LIUYAO } from "@/lib/demo-data";
 import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
+import { grantSpiritPowerForTask } from "@/lib/spirit-pet-tasks";
+import PageHeader from "@/components/ui/PageHeader";
 
 export default function LiuyaoPage() {
   const { user } = useApp();
@@ -44,6 +46,7 @@ export default function LiuyaoPage() {
       summary: hex.advice,
       data: { question, result: hex },
     });
+    grantSpiritPowerForTask("liuyao");
     setGenerating(false);
   };
 
@@ -52,12 +55,8 @@ export default function LiuyaoPage() {
   }
 
   return (
-    <div className="px-4 pb-4">
-      <header className="mb-4 pt-2 text-center">
-        <h1 className="page-title">AI 六爻</h1>
-        <p className="text-xs text-app-muted">诚心发问 · 爻卦天机</p>
-        <p className="mt-1 text-[10px] text-app-accent">剩余免费 {remaining} 次</p>
-      </header>
+    <>
+      <PageHeader title="AI 六爻" subtitle={`诚心发问 · 爻卦天机 · 剩余免费 ${remaining} 次`} />
 
       {!result ? (
         <>
@@ -144,6 +143,6 @@ export default function LiuyaoPage() {
 
       <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="AI六爻" />
       <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
-    </div>
+    </>
   );
 }

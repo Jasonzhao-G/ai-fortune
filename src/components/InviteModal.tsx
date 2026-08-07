@@ -12,9 +12,10 @@ interface InviteModalProps {
   onClose: () => void;
   userId: string;
   inviteLink: string;
+  onQrDownloaded?: () => void;
 }
 
-export default function InviteModal({ open, onClose, userId, inviteLink }: InviteModalProps) {
+export default function InviteModal({ open, onClose, userId, inviteLink, onQrDownloaded }: InviteModalProps) {
   const [copied, setCopied] = useState(false);
   const refCount = getReferralCount(userId);
   const qrUrl = getInviteQrUrl(inviteLink);
@@ -39,6 +40,7 @@ export default function InviteModal({ open, onClose, userId, inviteLink }: Invit
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
       downloadPoster(canvas.toDataURL("image/png"), "AI灵宠-邀请二维码.png");
+      onQrDownloaded?.();
     };
     img.src = qrUrl;
   };
@@ -54,11 +56,11 @@ export default function InviteModal({ open, onClose, userId, inviteLink }: Invit
         <div className="flex flex-col items-center text-center">
           <p className="text-base font-semibold text-app-accent">邀请好友</p>
           <p className="mt-2 text-[11px] leading-relaxed text-app-muted">
-            成功邀请 1 位好友注册，即可获得 <span className="font-bold text-app-gold">{REFERRAL_GIFT_BAGS} 袋灵粮</span>
+            成功邀请 1 位好友注册，即可获得 <span className="font-bold text-app-gold">{REFERRAL_GIFT_BAGS} 瓶灵丹</span>
             （{REFERRAL_GIFT_BAGS * USES_PER_BAG} 次测算）！
           </p>
           <p className="mt-3 text-xs text-app-text">
-            已邀请 {refCount} 人 · 累计 {refCount * REFERRAL_GIFT_BAGS} 袋灵粮
+            已邀请 {refCount} 人 · 累计 {refCount * REFERRAL_GIFT_BAGS} 瓶灵丹
           </p>
 
           <div className="my-5 flex flex-col items-center justify-center">

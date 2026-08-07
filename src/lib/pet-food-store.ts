@@ -22,11 +22,11 @@ export interface PetFoodPlan {
 }
 
 export const PET_FOOD_PLANS: PetFoodPlan[] = [
-  { id: "bag", label: "一袋灵粮", price: 19.9, desc: "可测算 5 次", type: "bag", uses: 5 },
-  { id: "3d", label: "三天灵粮", price: 39.9, desc: "三天随意测算", type: "unlimited", days: 3 },
-  { id: "month", label: "一个月灵粮", price: 299, desc: "30 天随意测算", type: "unlimited", days: 30 },
-  { id: "half", label: "半年灵粮", price: 599, desc: "183 天随意测算", type: "unlimited", days: 183 },
-  { id: "year", label: "一年灵粮", price: 899, desc: "365 天随意测算", type: "unlimited", days: 365 },
+  { id: "bag", label: "一瓶灵丹", price: 19.9, desc: "可测算 5 次", type: "bag", uses: 5 },
+  { id: "3d", label: "三天灵丹", price: 39.9, desc: "三天随意测算", type: "unlimited", days: 3 },
+  { id: "month", label: "一个月灵丹", price: 299, desc: "30 天随意测算", type: "unlimited", days: 30 },
+  { id: "half", label: "半年灵丹", price: 599, desc: "183 天随意测算", type: "unlimited", days: 183 },
+  { id: "year", label: "一年灵丹", price: 899, desc: "365 天随意测算", type: "unlimited", days: 365 },
 ];
 
 const FOOD_KEY = "ai-fortune-pet-food";
@@ -168,15 +168,15 @@ export function giftPetFood(fromUserId: string, toUserId: string, bags: number):
   addMessage({
     userId: toUserId,
     type: "gift_food",
-    title: "收到灵粮礼物",
-    content: `${fromUser.nickname} 向您赠送了 ${bags} 袋灵粮（${bags * USES_PER_BAG} 次测算）～`,
+    title: "收到灵丹礼物",
+    content: `${fromUser.nickname} 向您赠送了 ${bags} 瓶灵丹（${bags * USES_PER_BAG} 次测算）～`,
     relatedUserId: fromUserId,
   });
   addMessage({
     userId: fromUserId,
     type: "gift_food",
-    title: "灵粮赠送成功",
-    content: `您已成功赠送 ${bags} 袋灵粮，感谢分享～`,
+    title: "灵丹赠送成功",
+    content: `您已成功赠送 ${bags} 瓶灵丹，感谢分享～`,
     relatedUserId: toUserId,
   });
   return true;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, MessageCircle, Gift } from "lucide-react";
+import { Search, MessageCircle, Gift, User, Bell } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import {
   getPostsByFeed, addPost, toggleLike, toggleFavorite, addComment,
@@ -13,8 +13,18 @@ import ConfirmModal from "@/components/ConfirmModal";
 import CommunityPostCard from "@/components/CommunityPostCard";
 import CommunityComposeBox from "@/components/CommunityComposeBox";
 import GiftFoodModal from "@/components/GiftFoodModal";
+import PageHeader from "@/components/ui/PageHeader";
+import PageCarouselBanner from "@/components/PageCarouselBanner";
+import SegmentedControl from "@/components/ui/SegmentedControl";
+import { PAGE_BANNERS } from "@/lib/page-banners";
 
 type FeedTab = "all" | "following" | "hot";
+
+const FEED_TABS = [
+  { id: "all" as const, label: "广场" },
+  { id: "following" as const, label: "我的关注" },
+  { id: "hot" as const, label: "热门" },
+];
 
 export default function CommunityPage() {
   const { user } = useApp();
@@ -105,21 +115,12 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="px-4 pb-4">
-      <header className="mb-3 pt-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 text-center">
-            <h1 className="page-title">社区</h1>
-            <p className="text-xs text-app-muted">分享命理心得 · 交流运势感悟</p>
-          </div>
-          <Link href="/community/me" className="shrink-0 rounded-lg border border-app-border px-2 py-1 text-[10px] text-app-gold">
-            个人中心
-          </Link>
-          <Link href="/community/messages" className="shrink-0 rounded-lg border border-app-border px-2 py-1 text-[10px] text-app-accent">
-            私信
-          </Link>
-        </div>
-        <div className="relative mt-2">
+    <>
+      <PageHeader
+        title="社区"
+        subtitle="分享命理心得 · 交流运势感悟"
+      >
+        <div className="relative mt-3">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-app-muted" />
           <input
             className="app-input !py-2 pl-9 text-xs"
@@ -146,7 +147,7 @@ export default function CommunityPage() {
                       <MessageCircle className="h-3.5 w-3.5 text-app-accent" />
                     </Link>
                     <button onClick={() => setGiftTarget(u.id)}
-                      className="rounded-lg border border-app-border p-1.5" title="赠送灵粮">
+                      className="rounded-lg border border-app-border p-1.5" title="赠送灵丹">
                       <Gift className="h-3.5 w-3.5 text-app-gold" />
                     </button>
                   </div>
@@ -162,18 +163,36 @@ export default function CommunityPage() {
           </div>
         )}
         {shareTip && (
-          <p className="mt-2 rounded-lg bg-app-accent/10 px-3 py-1.5 text-[11px] text-app-accent">{shareTip}</p>
+          <p className="caption mt-2 rounded-lg bg-app-accent/10 px-3 py-1.5 text-app-accent">{shareTip}</p>
         )}
-      </header>
+      </PageHeader>
 
-      <div className="mb-4 flex gap-1 rounded-xl border border-app-border p-0.5">
-        {([["all", "广场"], ["following", "我的关注"], ["hot", "热门"]] as const).map(([id, label]) => (
-          <button key={id} onClick={() => setFeedTab(id)}
-            className={`flex-1 rounded-lg py-1.5 text-[10px] ${feedTab === id ? "bg-app-accent text-white" : "text-app-muted"}`}>
-            {label}
-          </button>
-        ))}
+      <PageCarouselBanner slides={PAGE_BANNERS.community} className="!mb-3 !pt-0" />
+
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <Link
+          href="/community/me"
+          className="flex flex-col items-center rounded-xl border border-app-border bg-app-card p-3 text-center transition-colors hover:border-app-gold/50"
+        >
+          <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-app-gold/15">
+            <User className="h-4 w-4 text-app-gold" />
+          </div>
+          <span className="caption font-semibold text-app-text">个人中心</span>
+          <span className="micro mt-0.5 leading-tight text-app-muted">发帖 · 收藏 · 评论</span>
+        </Link>
+        <Link
+          href="/community/messages"
+          className="flex flex-col items-center rounded-xl border border-app-border bg-app-card p-3 text-center transition-colors hover:border-app-accent/50"
+        >
+          <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-app-accent/10">
+            <Bell className="h-4 w-4 text-app-accent" />
+          </div>
+          <span className="caption font-semibold text-app-text">消息</span>
+          <span className="micro mt-0.5 leading-tight text-app-muted">私信 · 系统通知</span>
+        </Link>
       </div>
+
+      <SegmentedControl value={feedTab} options={FEED_TABS} onChange={setFeedTab} size="sm" />
 
       <div className="mb-4">
         <CommunityComposeBox
@@ -231,6 +250,6 @@ export default function CommunityPage() {
           fromUserId={uid}
         />
       )}
-    </div>
+    </>
   );
 }

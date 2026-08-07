@@ -9,7 +9,7 @@ interface PaywallModalProps {
   onSubscribed?: () => void;
 }
 
-/** 灵粮不足时弹出灵宠饿肚子提示 */
+/** 灵丹不足时弹出灵宠饿肚子提示 */
 export default function PaywallModal({ open, onClose, feature, onSubscribed }: PaywallModalProps) {
   return (
     <PetFoodHungryModal

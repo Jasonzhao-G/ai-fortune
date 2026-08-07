@@ -121,7 +121,7 @@ export default function UserProfilePage() {
             </Link>
             {uid && (
               <button onClick={() => setGiftOpen(true)}
-                className="rounded-xl border border-app-border px-3 py-2 text-xs text-app-gold" title="赠送灵粮">
+                className="rounded-xl border border-app-border px-3 py-2 text-xs text-app-gold" title="赠送灵丹">
                 <Gift className="h-3.5 w-3.5" />
               </button>
             )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const STEPS = [
+const DEFAULT_STEPS = [
   "正在连接命理推演引擎...",
   "解析天干地支四柱...",
   "计算流年大运走势...",
@@ -14,34 +14,56 @@ const STEPS = [
 ];
 
 interface GenerationOverlayProps {
-  onComplete: () => void;
+  onComplete?: () => void;
   duration?: number;
+  title?: string;
+  message?: string;
+  subMessage?: string;
+  steps?: string[];
+  icon?: string;
+  /** 嵌入面板内，不遮挡顶部导航 */
+  embedded?: boolean;
 }
 
-export default function GenerationOverlay({ onComplete, duration = 6000 }: GenerationOverlayProps) {
+export default function GenerationOverlay({
+  onComplete,
+  duration = 6000,
+  title = "大师正在测算",
+  message,
+  subMessage,
+  steps = DEFAULT_STEPS,
+  icon = "☯",
+  embedded = false,
+}: GenerationOverlayProps) {
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const stepInterval = setInterval(() => {
-      setStep((s) => Math.min(s + 1, STEPS.length - 1));
-    }, duration / STEPS.length);
+      setStep((s) => Math.min(s + 1, steps.length - 1));
+    }, duration / steps.length);
 
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + 1, 100));
     }, duration / 100);
 
-    const timer = setTimeout(onComplete, duration);
+    const timer = onComplete ? setTimeout(onComplete, duration) : undefined;
 
     return () => {
       clearInterval(stepInterval);
       clearInterval(progressInterval);
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
     };
-  }, [duration, onComplete]);
+  }, [duration, onComplete, steps.length]);
+
+  const stepText = message ?? steps[step];
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-app-bg/95 backdrop-blur-md">
+    <div className={
+      embedded
+        ? "absolute inset-0 z-30 flex min-h-[280px] flex-col items-center justify-center rounded-xl bg-app-bg/95 backdrop-blur-md"
+        : "fixed inset-0 z-[100] flex flex-col items-center justify-center bg-app-bg/95 backdrop-blur-md"
+    }>
       <div className="absolute inset-0 opacity-20"
         style={{
           backgroundImage: "radial-gradient(circle at 50% 50%, rgba(212,165,116,0.15), transparent 60%)",
@@ -54,15 +76,17 @@ export default function GenerationOverlay({ onComplete, duration = 6000 }: Gener
             style={{ boxShadow: "0 0 24px rgba(212,165,116,0.25)" }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl text-app-gold">☯</span>
+            <span className="text-3xl text-app-gold">{icon}</span>
           </div>
           <div className="absolute inset-0 animate-spin rounded-full border-t-2 border-app-accent"
             style={{ animationDuration: "3s" }}
           />
         </div>
 
-        <h2 className="mb-2 text-lg font-semibold text-app-text">大师正在测算</h2>
-        <p className="mb-6 h-5 text-sm text-app-gold transition-all">{STEPS[step]}</p>
+        <h2 className="mb-2 text-lg font-semibold text-app-text">{title}</h2>
+        <p className="mb-1 h-5 text-sm text-app-gold transition-all">{stepText}</p>
+        {subMessage && <p className="mb-6 text-xs text-app-muted">{subMessage}</p>}
+        {!subMessage && <div className="mb-6" />}
 
         <div className="h-1.5 w-64 overflow-hidden rounded-full bg-app-border">
           <div

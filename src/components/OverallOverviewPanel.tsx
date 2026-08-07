@@ -2,13 +2,15 @@
 
 import type { OverallAnalysis } from "@/lib/types";
 import { EMPTY_DIMENSIONS } from "@/lib/fortune-chart";
+import BoostFortuneButton from "@/components/BoostFortuneButton";
 
 interface OverallOverviewPanelProps {
   overall?: OverallAnalysis | null;
   filled?: boolean;
+  showBoostCta?: boolean;
 }
 
-export default function OverallOverviewPanel({ overall, filled = false }: OverallOverviewPanelProps) {
+export default function OverallOverviewPanel({ overall, filled = false, showBoostCta = false }: OverallOverviewPanelProps) {
   const dimensions = filled && overall
     ? overall.dimensions
     : EMPTY_DIMENSIONS.map((d) => ({ key: d.key, label: d.label, score: 0, text: d.text }));
@@ -37,6 +39,12 @@ export default function OverallOverviewPanel({ overall, filled = false }: Overal
         </div>
         <p className="text-[11px] leading-relaxed text-app-muted">{overallDim.text}</p>
       </div>
+
+      {showBoostCta && filled && (
+        <div className="mx-auto mb-5 max-w-xs">
+          <BoostFortuneButton />
+        </div>
+      )}
 
       {/* 其他维度 */}
       <div className="grid grid-cols-2 gap-2">

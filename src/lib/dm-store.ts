@@ -104,6 +104,7 @@ export function sendDm(toUserId: string, content: string): { ok: boolean; error?
       title: "新私信",
       content: `${user.nickname}：${content.slice(0, 50)}`,
     });
+    import("@/lib/spirit-pet-tasks").then((m) => m.tryGrantCommunitySpiritPower("communityDm"));
   }
 
   return { ok: true, threadId: thread.id };

@@ -13,6 +13,8 @@ import type { SavedPerson } from "@/lib/types";
 import BirthForm from "@/components/BirthForm";
 import type { BirthInfo } from "@/lib/types";
 import { formatBirthSummary } from "@/lib/birth-store";
+import PageHeader from "@/components/ui/PageHeader";
+import Badge from "@/components/ui/Badge";
 
 export default function RecordsPage() {
   const [groups, setGroups] = useState<PersonGroup[]>([]);
@@ -74,18 +76,14 @@ export default function RecordsPage() {
   const others = persons.filter((p) => !p.isPrimary);
 
   return (
-    <div className="px-4 pb-4">
-      <header className="mb-4 pt-2 text-center">
-        <h1 className="page-title">我的测算</h1>
-        <p className="text-xs text-app-muted">管理测算人 · 历史记录 · AI灵宠</p>
-      </header>
+    <>
+      <PageHeader title="我的测算" subtitle="管理测算人 · 历史记录 · AI灵宠" />
 
-      {/* 第一步：主测算人「我」· 必填 */}
-      <section className="mb-5">
+      <section className="page-section">
         <div className="mb-2 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-app-accent text-[10px] text-white">1</span>
-          <p className="text-xs font-medium text-app-text">添加主测算人 · {PRIMARY_PERSON_NAME}</p>
-          <span className="rounded-full bg-red-500/20 px-1.5 py-0.5 text-[9px] text-red-400">必填</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-app-accent text-[11px] font-bold text-white">1</span>
+          <p className="subsection-title">添加主测算人 · {PRIMARY_PERSON_NAME}</p>
+          <Badge variant="accent">必填</Badge>
         </div>
 
         <div className="app-card mb-3 border-app-accent/30 bg-app-accent/5">
@@ -231,6 +229,6 @@ export default function RecordsPage() {
           </div>
         )}
       </section>
-    </div>
+    </>
   );
 }

@@ -32,7 +32,7 @@ export default function GiftFoodModal({ open, onClose, toUserId, fromUserId, onG
 
   const handleGift = () => {
     if (bags > maxBags) {
-      setError("灵粮余额不足，请先购买");
+      setError("灵丹余额不足，请先购买");
       return;
     }
     if (giftPetFood(fromUserId, toUserId, bags)) {
@@ -50,9 +50,9 @@ export default function GiftFoodModal({ open, onClose, toUserId, fromUserId, onG
         <button onClick={onClose} className="absolute right-4 top-4">
           <X className="h-5 w-5 text-app-muted" />
         </button>
-        <h2 className="mb-4 text-base font-semibold text-app-text">🎁 赠送灵粮</h2>
+        <h2 className="mb-4 text-base font-semibold text-app-text">🎁 赠送灵丹</h2>
         <p className="mb-3 text-xs text-app-muted">赠送给 {target.nickname}</p>
-        <p className="mb-3 text-[10px] text-app-gold">您的灵粮余额：{totalUses} 次（可赠 {maxBags} 袋）</p>
+        <p className="mb-3 text-[10px] text-app-gold">您的灵丹余额：{totalUses} 次（可赠 {maxBags} 瓶）</p>
 
         {success ? (
           <p className="py-6 text-center text-sm text-app-accent">赠送成功！</p>
@@ -61,7 +61,7 @@ export default function GiftFoodModal({ open, onClose, toUserId, fromUserId, onG
             <div className="mb-4 flex items-center justify-center gap-4">
               <button onClick={() => setBags(Math.max(1, bags - 1))}
                 className="h-8 w-8 rounded-full border border-app-border text-lg">−</button>
-              <span className="text-lg font-bold text-app-text">{bags} 袋</span>
+              <span className="text-lg font-bold text-app-text">{bags} 瓶</span>
               <button onClick={() => setBags(Math.min(maxBags || 1, bags + 1))}
                 className="h-8 w-8 rounded-full border border-app-border text-lg">+</button>
             </div>

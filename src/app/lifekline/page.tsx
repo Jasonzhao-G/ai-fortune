@@ -5,7 +5,6 @@ import BirthForm from "@/components/BirthForm";
 import LifeklineChart, { MonthlyLineMini } from "@/components/LifeklineChart";
 import GenerationOverlay from "@/components/GenerationOverlay";
 import PaywallModal from "@/components/PaywallModal";
-import AnalysisPanel from "@/components/AnalysisPanel";
 import OverallOverviewPanel from "@/components/OverallOverviewPanel";
 import {
   generateFullLifeKline,
@@ -15,7 +14,6 @@ import {
   generateOverallAnalysis,
 } from "@/lib/fortune-chart";
 import { calculateBazi } from "@/lib/bazi";
-import { getMockBaziAnalysis } from "@/lib/mock-analysis";
 import { canUse, incrementUsage, getRemaining, addHistory } from "@/lib/user-store";
 import {
   saveRecord, buildPersonKey, buildPersonLabel,
@@ -27,6 +25,17 @@ import type { BirthInfo, KlineData, YearAnalysis, OverallAnalysis, BaziResult, K
 import { X } from "lucide-react";
 import ReportPosterButton, { SharePosterButton } from "@/components/ReportPosterButton";
 import { LIFE_YEAR_OPTIONS } from "@/lib/demo-data";
+import PageHeader from "@/components/ui/PageHeader";
+import PageCarouselBanner from "@/components/PageCarouselBanner";
+import FortuneHubNav, { type FortuneHubTab } from "@/components/FortuneHubNav";
+import LiuyaoHubPanel from "@/components/fortune-hub/LiuyaoHubPanel";
+import XiangHubPanel from "@/components/fortune-hub/XiangHubPanel";
+import MasterHubPanel from "@/components/fortune-hub/MasterHubPanel";
+import AskHubPanel from "@/components/fortune-hub/AskHubPanel";
+import RecordsHubPanel from "@/components/fortune-hub/RecordsHubPanel";
+import BaziHubPanel from "@/components/fortune-hub/BaziHubPanel";
+import FoodRulesModal from "@/components/FoodRulesModal";
+import { PAGE_BANNERS } from "@/lib/page-banners";
 
 function periodTitle(lifeYears: number, drillYear: number | null): string {
   if (drillYear) return `${drillYear}年 · 月度 K 线`;
@@ -55,8 +64,18 @@ export default function LifeklinePage() {
   const [paywall, setPaywall] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
   const [lifeYears, setLifeYears] = useState(10);
+  const [remaining, setRemaining] = useState(5);
+  const [foodRulesOpen, setFoodRulesOpen] = useState(false);
+  const [hubTab, setHubTab] = useState<FortuneHubTab>("lifekline");
 
-  const remaining = getRemaining("lifekline");
+  useEffect(() => {
+    setRemaining(getRemaining("lifekline"));
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab === "bazi" || tab === "liuyao" || tab === "xiang" || tab === "master" || tab === "ask" || tab === "records") {
+      setHubTab(tab as FortuneHubTab);
+    }
+  }, [phase]);
   const hasResult = phase === "result" && fullKline.length > 0;
   const showLifeOverview = hasResult && lifeYears < 100;
 
@@ -152,21 +171,57 @@ export default function LifeklinePage() {
     setSelectedIndex(undefined);
   };
 
-  if (phase === "generating") {
-    return <GenerationOverlay onComplete={onGenerateComplete} duration={7000} />;
+  if (phase === "generating" && hubTab === "lifekline") {
+    return (
+      <>
+        <PageHeader
+          title="人生 K 线"
+          subtitle={`命势推演，可视化排盘，剩余免费 ${remaining} 次`}
+        />
+        <PageCarouselBanner slides={PAGE_BANNERS.lifekline} className="!mb-3 !pt-0" />
+        <FortuneHubNav active={hubTab} onChange={setHubTab} />
+        <div className="relative min-h-[320px]">
+          <GenerationOverlay embedded onComplete={onGenerateComplete} duration={7000} />
+        </div>
+      </>
+    );
   }
 
-  return (
-    <div className="px-4 pb-4">
-      <header className="mb-4 pt-2 text-center">
-        <h1 className="page-title">人生 K 线</h1>
-        <p className="text-xs text-app-muted">八字排盘 · 命势推演</p>
-        {phase === "form" && (
-          <p className="mt-1 text-[10px] text-app-accent">剩余免费 {remaining} 次</p>
-        )}
-      </header>
+  const showKlineContent = hubTab === "lifekline";
+  const showBaziContent = hubTab === "bazi";
 
-      {phase === "form" && (
+  return (
+    <>
+      <PageHeader
+        title="人生 K 线"
+        subtitle={
+          <>
+            命势推演，可视化排盘，剩余免费 {remaining} 次（
+            <button
+              type="button"
+              onClick={() => setFoodRulesOpen(true)}
+              className="font-semibold text-app-accent underline decoration-app-accent/40 underline-offset-2"
+            >
+              查看灵丹规则
+            </button>
+            ）
+          </>
+        }
+      />
+
+      <PageCarouselBanner slides={PAGE_BANNERS.lifekline} className="!mb-3 !pt-0" />
+
+      <FortuneHubNav active={hubTab} onChange={setHubTab} />
+
+      {hubTab === "liuyao" && <LiuyaoHubPanel />}
+      {hubTab === "xiang" && <XiangHubPanel />}
+      {hubTab === "master" && <MasterHubPanel />}
+      {hubTab === "ask" && <AskHubPanel />}
+      {hubTab === "records" && <RecordsHubPanel />}
+
+      {showBaziContent && <BaziHubPanel />}
+
+      {showKlineContent && phase === "form" && (
         <>
           <div className="app-card mb-4">
             <BirthForm onSubmit={handleSubmit} />
@@ -185,7 +240,7 @@ export default function LifeklinePage() {
         </>
       )}
 
-      {hasResult && (
+      {showKlineContent && hasResult && (
         <div className="mb-3 flex flex-wrap gap-1.5">
           {LIFE_YEAR_OPTIONS.map(({ label, value }) => (
             <button key={value} onClick={() => setLifeYears(value)}
@@ -196,7 +251,7 @@ export default function LifeklinePage() {
         </div>
       )}
 
-      {(phase === "form" || hasResult) && (
+      {showKlineContent && (phase === "form" || hasResult) && (
         <>
           <LifeklineChart
             data={hasResult ? mainData : []}
@@ -227,7 +282,7 @@ export default function LifeklinePage() {
             </div>
           )}
 
-          <OverallOverviewPanel overall={overall} filled={hasResult} />
+          <OverallOverviewPanel overall={overall} filled={hasResult} showBoostCta={hasResult} />
 
           {hasResult && overall && birthInfo && (
             <>
@@ -269,12 +324,6 @@ export default function LifeklinePage() {
                   }}
                 />
               </div>
-
-              {bazi && (
-                <div className="mt-4">
-                  <AnalysisPanel result={getMockBaziAnalysis(bazi)} bazi={bazi} />
-                </div>
-              )}
 
               <button onClick={() => {
                 setPhase("form");
@@ -324,6 +373,7 @@ export default function LifeklinePage() {
 
       <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="人生K线" />
       <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
-    </div>
+      <FoodRulesModal open={foodRulesOpen} onClose={() => setFoodRulesOpen(false)} />
+    </>
   );
 }

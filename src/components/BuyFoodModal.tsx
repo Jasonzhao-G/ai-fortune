@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import SpiritGourdIcon, { SpiritGourdHeading } from "@/components/icons/SpiritGourdIcon";
 import { PET_FOOD_PLANS, purchasePetFood, getPaymentQrUrl } from "@/lib/pet-food-store";
 
 type Step = "plans" | "method" | "qrcode" | "success";
@@ -64,7 +65,9 @@ export default function BuyFoodModal({ open, onClose, onPurchased }: BuyFoodModa
     <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-app-border bg-app-card p-6 sm:rounded-3xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-app-text">🍖 购买灵粮</h2>
+          <h2 className="text-base font-semibold text-app-text">
+            <SpiritGourdHeading>购买灵丹</SpiritGourdHeading>
+          </h2>
           <button onClick={onClose}><X className="h-5 w-5 text-app-muted" /></button>
         </div>
 
@@ -72,7 +75,7 @@ export default function BuyFoodModal({ open, onClose, onPurchased }: BuyFoodModa
           <div className="py-8 text-center">
             <p className="text-4xl">✅</p>
             <p className="mt-3 text-sm text-app-accent">
-              {methodLabel}支付成功！灵粮已到账～
+              {methodLabel}支付成功！灵丹已到账～
             </p>
           </div>
         ) : step === "qrcode" && selectedPlan && payMethod ? (
@@ -121,12 +124,12 @@ export default function BuyFoodModal({ open, onClose, onPurchased }: BuyFoodModa
               </button>
             </div>
             <button onClick={() => { setStep("plans"); setPendingPlan(null); }} className="mt-3 w-full text-xs text-app-muted">
-              返回选择灵粮
+              返回选择灵丹
             </button>
           </div>
         ) : (
           <>
-            <p className="mb-3 text-[11px] text-app-muted">一袋灵粮 = 5 次测算</p>
+            <p className="mb-3 text-[11px] text-app-muted">一瓶灵丹 = 5 次测算</p>
             <div className="space-y-2">
               {PET_FOOD_PLANS.map((plan) => (
                 <button
@@ -134,7 +137,7 @@ export default function BuyFoodModal({ open, onClose, onPurchased }: BuyFoodModa
                   onClick={() => handleSelectPlan(plan.id)}
                   className="flex w-full items-center gap-3 rounded-xl border border-app-border px-4 py-3 text-left transition-colors hover:border-app-gold"
                 >
-                  <span className="text-2xl">🍖</span>
+                  <SpiritGourdIcon className="h-8 w-8 text-app-gold" title="灵丹" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-app-text">{plan.label}</p>
                     <p className="text-[10px] text-app-muted">{plan.desc}</p>

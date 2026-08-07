@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import ImageUpload from "@/components/ImageUpload";
 import AnalysisPanel from "@/components/AnalysisPanel";
-import GenerationOverlay from "@/components/GenerationOverlay";
+import XiangScanOverlay from "@/components/XiangScanOverlay";
 import PaywallModal from "@/components/PaywallModal";
 import ReportPosterButton, { SharePosterButton } from "@/components/ReportPosterButton";
 import { canUse, incrementUsage, getRemaining, addHistory } from "@/lib/user-store";
@@ -13,38 +13,42 @@ import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import { DEMO_XIANG_PALM, DEMO_XIANG_FACE } from "@/lib/demo-data";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import XiangDemoDiagram from "@/components/XiangDemoDiagram";
+import PageHeader from "@/components/ui/PageHeader";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import type { AnalysisResult } from "@/lib/types";
 
 type Tab = "palm" | "face";
+
+const XIANG_TABS = [
+  { id: "palm" as const, label: "手相" },
+  { id: "face" as const, label: "面相" },
+];
+
+const SCAN_MS = 3000;
 
 export default function XiangPage() {
   const { user } = useApp();
   const [tab, setTab] = useState<Tab>("palm");
   const [preview, setPreview] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [paywall, setPaywall] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
   const [pendingType, setPendingType] = useState<Tab>("palm");
+  const pendingPreview = useRef<string | null>(null);
 
   const remaining = getRemaining("xiang");
 
-  const startAnalyze = () => {
-    if (!preview) return;
-    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
-    if (!canUse("xiang")) { setPaywall(true); return; }
-    setPendingType(tab);
-    setGenerating(true);
-    setResult(null);
-  };
-
-  const onGenerateComplete = async () => {
-    setGenerating(false);
+  const runAnalyze = useCallback(async () => {
+    const image = pendingPreview.current;
+    if (!image) return;
+    setLoading(true);
     try {
       const res = await fetch("/api/analyze/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: pendingType, image: preview }),
+        body: JSON.stringify({ type: pendingType, image }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -67,43 +71,62 @@ export default function XiangPage() {
       });
     } catch {
       setResult(null);
+    } finally {
+      setLoading(false);
+      setScanning(false);
     }
+  }, [pendingType, user?.nickname]);
+
+  useEffect(() => {
+    if (!scanning) return;
+    const timer = setTimeout(runAnalyze, SCAN_MS);
+    return () => clearTimeout(timer);
+  }, [scanning, runAnalyze]);
+
+  const startAnalyze = () => {
+    if (!preview) return;
+    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
+    if (!canUse("xiang")) { setPaywall(true); return; }
+    setPendingType(tab);
+    pendingPreview.current = preview;
+    setResult(null);
+    setScanning(true);
   };
 
-  if (generating) {
-    return <GenerationOverlay onComplete={onGenerateComplete} duration={5000} />;
-  }
-
   const demo = tab === "palm" ? DEMO_XIANG_PALM : DEMO_XIANG_FACE;
+  const scanLabel = tab === "palm" ? "手相矩阵扫描中…" : "面相矩阵扫描中…";
 
   return (
-    <div className="px-4 pb-4">
-      <header className="mb-4 pt-2 text-center">
-        <h1 className="page-title">看相</h1>
-        <p className="text-xs text-app-muted">AI 智能 · 手相 & 面相分析</p>
-        <p className="mt-1 text-[10px] text-app-accent">剩余免费 {remaining} 次</p>
-      </header>
-
-      <div className="mb-4 flex rounded-xl border border-app-border p-0.5">
-        {(["palm", "face"] as Tab[]).map((t) => (
-          <button key={t} onClick={() => { setTab(t); setPreview(null); setResult(null); }}
-            className={`flex-1 rounded-lg py-2 text-xs transition-colors ${
-              tab === t ? "bg-app-accent text-white" : "text-app-muted"
-            }`}>
-            {t === "palm" ? "手相" : "面相"}
-          </button>
-        ))}
-      </div>
-
-      <ImageUpload
-        label={tab === "palm" ? "上传手相照片" : "上传面相照片"}
-        hint={tab === "palm" ? "手掌平放，掌纹清晰" : "正面拍摄，光线均匀"}
-        preview={preview}
-        onImageSelect={setPreview}
-        onClear={() => { setPreview(null); setResult(null); }}
+    <>
+      <PageHeader
+        title="看相"
+        subtitle={`AI 智能 · 手相 & 面相分析 · 剩余免费 ${remaining} 次`}
       />
 
-      {!preview && !result && (
+      <SegmentedControl
+        value={tab}
+        options={XIANG_TABS}
+        onChange={(t) => { setTab(t); setPreview(null); setResult(null); setScanning(false); }}
+      />
+
+      {!scanning && (
+        <ImageUpload
+          label={tab === "palm" ? "上传手相照片" : "上传面相照片"}
+          hint={tab === "palm" ? "手掌平放，掌纹清晰" : "正面拍摄，光线均匀"}
+          preview={preview}
+          onImageSelect={setPreview}
+          onClear={() => { setPreview(null); setResult(null); }}
+        />
+      )}
+
+      {scanning && preview && (
+        <XiangScanOverlay
+          imageUrl={preview}
+          label={loading ? "命相解析中…" : scanLabel}
+        />
+      )}
+
+      {!preview && !result && !scanning && (
         <div className="mt-4 app-card">
           <p className="mb-2 text-xs font-medium text-app-text">
             {tab === "palm" ? "手相" : "面相"}测算示例
@@ -127,7 +150,7 @@ export default function XiangPage() {
         </div>
       )}
 
-      {preview && !result && (
+      {preview && !result && !scanning && (
         <button onClick={startAnalyze} className="app-btn mt-4">
           AI 大师看相分析
         </button>
@@ -159,6 +182,6 @@ export default function XiangPage() {
 
       <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="看相" />
       <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
-    </div>
+    </>
   );
 }

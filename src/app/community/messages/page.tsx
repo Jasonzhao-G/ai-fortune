@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Send } from "lucide-react";
+import { ChevronLeft, Send, Heart } from "lucide-react";
+import ComingSoonModal from "@/components/ComingSoonModal";
 import { useApp } from "@/context/AppContext";
 import {
   getMyThreads, getThreadMessages, sendDm, canSendDm,
@@ -24,6 +25,7 @@ export default function MessagesChatPage() {
   const [draft, setDraft] = useState("");
   const [tip, setTip] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const [matchOpen, setMatchOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -173,11 +175,25 @@ export default function MessagesChatPage() {
 
   // ─── 会话列表（X 风格） ───
   return (
+    <>
     <div className="px-4 pb-4">
       <Link href="/community" className="mb-3 inline-flex items-center gap-1 text-xs text-app-accent">
         <ChevronLeft className="h-4 w-4" /> 返回社区
       </Link>
       <h1 className="page-title mb-4">私信</h1>
+
+      <button
+        type="button"
+        onClick={() => setMatchOpen(true)}
+        className="mb-4 flex w-full items-center gap-3 rounded-xl border border-app-gold/30 bg-app-gold/5 px-4 py-3 text-left transition-colors hover:border-app-gold"
+      >
+        <Heart className="h-5 w-5 text-app-gold" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-app-text">宠物配对</p>
+          <p className="text-[10px] text-app-muted">为灵宠寻找志同道合的伙伴</p>
+        </div>
+        <span className="text-[10px] text-app-gold">即将上线</span>
+      </button>
 
       {pendingIncoming.length > 0 && (
         <div className="mb-4">
@@ -232,5 +248,7 @@ export default function MessagesChatPage() {
         </div>
       )}
     </div>
+    <ComingSoonModal open={matchOpen} onClose={() => setMatchOpen(false)} title="宠物配对" />
+    </>
   );
 }

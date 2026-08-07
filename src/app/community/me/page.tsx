@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronLeft, Bell, Bookmark, MessageCircle, Repeat2, Send, Users, UserPlus } from "lucide-react";
+import { ChevronLeft, Bell, Bookmark, MessageCircle, Repeat2, Send, Users, UserPlus, Heart } from "lucide-react";
+import ComingSoonModal from "@/components/ComingSoonModal";
 import { useApp } from "@/context/AppContext";
 import {
   getMyPosts, getMyFavoritePosts, getMyComments, getMyRepostPosts,
@@ -28,6 +29,7 @@ const MENU_TABS: { id: ContentTab; label: string; icon: typeof Bell }[] = [
 export default function CommunityMePage() {
   const { user } = useApp();
   const [tab, setTab] = useState<ViewTab>("posts");
+  const [matchOpen, setMatchOpen] = useState(false);
   const [uid, setUid] = useState("");
   const [postContent, setPostContent] = useState("");
   const [postImages, setPostImages] = useState<string[]>([]);
@@ -119,6 +121,7 @@ export default function CommunityMePage() {
   );
 
   return (
+    <>
     <div className="px-4 pb-4">
       <Link href="/community" className="mb-3 inline-flex items-center gap-1 text-xs text-app-accent">
         <ChevronLeft className="h-4 w-4" /> 返回社区
@@ -169,6 +172,15 @@ export default function CommunityMePage() {
           <span className="flex-1 text-sm text-app-muted">私信聊天</span>
           <span className="text-[10px] text-app-accent">进入 →</span>
         </Link>
+        <button
+          type="button"
+          onClick={() => setMatchOpen(true)}
+          className="flex w-full items-center gap-3 border-t border-app-border px-4 py-3 text-left hover:bg-app-bg/50"
+        >
+          <Heart className="h-4 w-4 text-app-gold" />
+          <span className="flex-1 text-sm text-app-muted">宠物配对</span>
+          <span className="text-[10px] text-app-gold">即将上线</span>
+        </button>
       </nav>
 
       {tab === "posts" && (
@@ -232,5 +244,7 @@ export default function CommunityMePage() {
         )
       )}
     </div>
+    <ComingSoonModal open={matchOpen} onClose={() => setMatchOpen(false)} title="宠物配对" />
+    </>
   );
 }

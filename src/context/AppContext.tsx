@@ -5,20 +5,45 @@ import { translations, type Locale, type Theme, type Translations } from "@/lib/
 import type { UserProfile } from "@/lib/types";
 import { getOrCreateUser } from "@/lib/user-store";
 import { registerReferral } from "@/lib/community-store";
+import {
+  DEFAULT_UI_THEME,
+  UI_THEME_STORAGE_KEY,
+  UI_THEMES,
+  isUiThemeId,
+  type UiThemeId,
+} from "@/lib/ui-themes";
 
 interface AppContextValue {
   locale: Locale;
   theme: Theme;
+  uiTheme: UiThemeId;
   t: Translations;
   user: UserProfile | null;
   setLocale: (l: Locale) => void;
   setTheme: (t: Theme) => void;
+  setUiTheme: (t: UiThemeId) => void;
   refreshUser: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-function applyTheme(theme: Theme) {
+const UI_THEME_CLASSES = UI_THEMES.map((t) => `theme-${t.id}`);
+
+export function applyUiTheme(uiTheme: UiThemeId) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  UI_THEME_CLASSES.forEach((c) => root.classList.remove(c));
+  root.classList.add(`theme-${uiTheme}`);
+  root.classList.toggle("dark", uiTheme === "ink");
+  root.classList.toggle("light", uiTheme !== "ink");
+  const meta = UI_THEMES.find((t) => t.id === uiTheme);
+  if (meta) {
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.setAttribute("content", meta.preview.bg);
+  }
+}
+
+function applyLegacyTheme(theme: Theme) {
   if (typeof document === "undefined") return;
   document.documentElement.classList.toggle("light", theme === "light");
   document.documentElement.classList.toggle("dark", theme === "dark");
@@ -34,15 +59,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return "zh";
     }
   });
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
+
+  const [uiTheme, setUiThemeState] = useState<UiThemeId>(() => {
+    if (typeof window === "undefined") return DEFAULT_UI_THEME;
     try {
-      const saved = localStorage.getItem("ai-fortune-theme") as Theme | null;
-      return saved === "light" ? "light" : "dark";
+      const saved = localStorage.getItem(UI_THEME_STORAGE_KEY);
+      return isUiThemeId(saved) ? saved : DEFAULT_UI_THEME;
     } catch {
-      return "dark";
+      return DEFAULT_UI_THEME;
     }
   });
+
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "light";
+    try {
+      const savedUi = localStorage.getItem(UI_THEME_STORAGE_KEY);
+      if (isUiThemeId(savedUi)) return savedUi === "ink" ? "dark" : "light";
+      const saved = localStorage.getItem("ai-fortune-theme") as Theme | null;
+      return saved === "dark" ? "dark" : "light";
+    } catch {
+      return "light";
+    }
+  });
+
   const [user, setUser] = useState<UserProfile | null>(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -53,7 +92,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    applyTheme(theme);
+    applyUiTheme(uiTheme);
+  }, [uiTheme]);
+
+  useEffect(() => {
+    applyLegacyTheme(theme);
   }, [theme]);
 
   useEffect(() => {
@@ -78,7 +121,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
     try { localStorage.setItem("ai-fortune-theme", t); } catch { /* ignore */ }
-    applyTheme(t);
+    if (t === "dark") {
+      setUiThemeState("ink");
+      try { localStorage.setItem(UI_THEME_STORAGE_KEY, "ink"); } catch { /* ignore */ }
+      applyUiTheme("ink");
+    } else {
+      setUiThemeState("cloud");
+      try { localStorage.setItem(UI_THEME_STORAGE_KEY, "cloud"); } catch { /* ignore */ }
+      applyUiTheme("cloud");
+    }
+  }, []);
+
+  const setUiTheme = useCallback((t: UiThemeId) => {
+    setUiThemeState(t);
+    try { localStorage.setItem(UI_THEME_STORAGE_KEY, t); } catch { /* ignore */ }
+    applyUiTheme(t);
+    const legacy: Theme = t === "ink" ? "dark" : "light";
+    setThemeState(legacy);
+    try { localStorage.setItem("ai-fortune-theme", legacy); } catch { /* ignore */ }
   }, []);
 
   const refreshUser = useCallback(() => {
@@ -88,7 +148,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const t = translations[locale];
 
   return (
-    <AppContext.Provider value={{ locale, theme, t, user, setLocale, setTheme, refreshUser }}>
+    <AppContext.Provider value={{ locale, theme, uiTheme, t, user, setLocale, setTheme, setUiTheme, refreshUser }}>
       {children}
     </AppContext.Provider>
   );
