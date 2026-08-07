@@ -110,13 +110,21 @@ export default function LiuyaoHubPanel() {
               subtitle: result.question.slice(0, 30),
               summary: result.analysis + "\n" + result.advice,
               type: "liuyao",
+              hexagramLines: result.lines,
+              guaName: result.guaName,
+              guaDesc: result.guaDesc,
+              luck: result.luck,
             }}
           />
           <SharePosterButton
             data={{
-              title: `${result.guaName}卦`,
-              summary: result.advice,
+              title: `${result.guaName}卦 · ${result.luck}`,
+              summary: result.analysis + "\n" + result.advice,
               type: "liuyao",
+              hexagramLines: result.lines,
+              guaName: result.guaName,
+              guaDesc: result.guaDesc,
+              luck: result.luck,
             }}
           />
           <div className="mt-3">

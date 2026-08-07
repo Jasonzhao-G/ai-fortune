@@ -42,6 +42,11 @@ export interface PosterData {
   petSpiritPower?: number;
   petCumulativeAbilities?: string[];
   petBaziDetail?: string;
+  /** 六爻卦象 */
+  hexagramLines?: { isYang: boolean; label?: string }[];
+  guaName?: string;
+  guaDesc?: string;
+  luck?: string;
 }
 
 
@@ -190,6 +195,9 @@ export async function generatePoster(data: PosterData, style: PosterStyle = "cla
   }
   if (data.type === "lifekline") {
     return generateLifeklinePoster(data, style);
+  }
+  if (data.type === "liuyao") {
+    return generateLiuyaoPoster(data, style);
   }
 
   const charts: KlineChartBlock[] =
@@ -772,6 +780,132 @@ function drawPosterPageHeader(
     ctx.font = "14px PingFang SC, sans-serif";
     ctx.fillText(data.subtitle, W / 2, 132);
   }
+}
+
+function drawHexagramOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  lines: { isYang: boolean; label?: string }[],
+  cx: number,
+  y: number,
+  theme: typeof STYLES.classic,
+): number {
+  const barW = 88;
+  const barH = 8;
+  const gap = 14;
+  const yinGap = 10;
+  const display = [...lines].reverse();
+  let cy = y + 20;
+
+  display.forEach((line, i) => {
+    const rowY = cy + i * gap;
+    ctx.fillStyle = theme.muted;
+    ctx.font = "11px PingFang SC, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(`${6 - i}爻`, cx - barW / 2 - 12, rowY + 6);
+
+    ctx.fillStyle = theme.gold;
+    if (line.isYang) {
+      roundRect(ctx, cx - barW / 2, rowY, barW, barH, 3);
+      ctx.fill();
+    } else {
+      const half = (barW - yinGap) / 2;
+      roundRect(ctx, cx - barW / 2, rowY, half, barH, 3);
+      ctx.fill();
+      roundRect(ctx, cx - barW / 2 + half + yinGap, rowY, half, barH, 3);
+      ctx.fill();
+    }
+
+    if (line.label) {
+      ctx.fillStyle = theme.muted;
+      ctx.font = "10px PingFang SC, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(line.label, cx + barW / 2 + 8, rowY + 6);
+    }
+  });
+
+  return y + display.length * gap + 36;
+}
+
+async function generateLiuyaoPoster(data: PosterData, style: PosterStyle): Promise<string> {
+  const W = POSTER_W;
+  const theme = STYLES[style];
+  const cardW = W - POSTER_PAD * 2;
+
+  const measureCanvas = document.createElement("canvas");
+  measureCanvas.width = W;
+  measureCanvas.height = 10;
+  const measureCtx = measureCanvas.getContext("2d")!;
+  measureCtx.font = POSTER_BODY_FONT;
+
+  const summaryLines = data.summary.split("\n").filter(Boolean);
+  const summaryBodyH = measureModuleBodyHeight(measureCtx, summaryLines, cardW - POSTER_CARD_PAD * 2);
+  const summaryH = POSTER_CARD_PAD + POSTER_TITLE_H + POSTER_BODY_TOP_GAP + summaryBodyH + POSTER_CARD_PAD;
+
+  const hexH = data.hexagramLines?.length ? 160 : 0;
+  const H =
+    measurePosterHeaderHeight(data) +
+    hexH +
+    POSTER_CARD_GAP +
+    summaryH +
+    POSTER_CARD_GAP +
+    POSTER_FOOTER_H;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, theme.bg[0]);
+  grad.addColorStop(0.5, theme.bg[1]);
+  grad.addColorStop(1, theme.bg[2]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  drawPosterPageHeader(ctx, W, data, theme);
+  let y = measurePosterHeaderHeight(data);
+
+  if (data.hexagramLines?.length) {
+    roundRect(ctx, POSTER_PAD, y, cardW, hexH - POSTER_CARD_GAP, 14);
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.fill();
+    ctx.strokeStyle = `${theme.gold}44`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = theme.gold;
+    ctx.font = "bold 16px PingFang SC, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`${data.guaName ?? ""}卦 · ${data.luck ?? ""}`, W / 2, y + 28);
+
+    if (data.guaDesc) {
+      ctx.fillStyle = theme.muted;
+      ctx.font = "12px PingFang SC, sans-serif";
+      ctx.fillText(data.guaDesc, W / 2, y + 48);
+    }
+
+    drawHexagramOnCanvas(ctx, data.hexagramLines, W / 2, y + 52, theme);
+    y += hexH;
+  }
+
+  roundRect(ctx, POSTER_PAD, y, cardW, summaryH, 14);
+  ctx.fillStyle = "rgba(0,0,0,0.22)";
+  ctx.fill();
+  ctx.fillStyle = theme.accent;
+  ctx.font = "bold 16px PingFang SC, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("卦象解读", POSTER_PAD + POSTER_CARD_PAD, y + 32);
+
+  ctx.fillStyle = theme.text;
+  ctx.font = POSTER_BODY_FONT;
+  let textY = y + 32 + POSTER_BODY_TOP_GAP + 8;
+  summaryLines.forEach((line) => {
+    textY = wrapText(ctx, line, POSTER_PAD + POSTER_CARD_PAD, textY, cardW - POSTER_CARD_PAD * 2, POSTER_BODY_LH, 20);
+    textY += POSTER_LINE_GAP;
+  });
+
+  await drawCompactPosterFooter(ctx, W, y + summaryH + POSTER_FOOTER_TOP_GAP, theme);
+  return canvas.toDataURL("image/png");
 }
 
 async function drawCompactPosterFooter(

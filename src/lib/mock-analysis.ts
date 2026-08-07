@@ -191,7 +191,7 @@ export function getMockImageAnalysis(
   if (type === "palm") {
     const f = pick(PALM_FEATURES, seed);
     const categories: CategoryAnalysis = {
-      wealth: `${prefix}显示${f.wealth}，${f.hand}。财运以正财为主，35岁后渐入佳境，宜稳健理财，忌高风险投机。`,
+      wealth: `【麻衣神相·财帛】${prefix}财帛宫显示${f.wealth}，${f.hand}。正财稳健，35岁后渐入佳境，宜守正出奇。`,
       love: `${f.love}，感情专一而深沉。已有伴侣者关系稳定，单身者明年春夏桃花较旺，宜主动把握。`,
       personality: `${f.wisdom}，${f.life}。您思维敏捷、体质尚可，做事踏实有条理，具备领导潜质。`,
       friends: "人缘较好，掌心红润者易获他人信任。贵人多出现在事业转折期，宜真诚待人、广结善缘。",
@@ -200,14 +200,14 @@ export function getMockImageAnalysis(
       career: `${f.career}，事业运势中期上升。适合管理、文化、技术类工作，40岁前宜深耕专业领域。`,
     };
     return {
-      summary: `根据您的手相综合分析：${f.life}，${f.wisdom}，${f.love}。${f.hand}，显示命格中上，整体运势平稳向好。中年后运势渐入佳境，宜把握机遇、稳中求进。`,
+      summary: `【麻衣神相】据手相综合分析：${f.life}，${f.wisdom}，${f.love}。${f.hand}，掌纹清而不乱，属中上命格，宜稳中求进、厚积薄发。`,
       categories,
     };
   }
 
   const f = pick(FACE_FEATURES, seed);
   const categories: CategoryAnalysis = {
-    wealth: `${f.nose}，${f.forehead}。财运中等偏上，正财稳定，偏财运在40岁后渐旺，宜稳健投资。`,
+    wealth: `【麻衣神相·财帛宫】${f.nose}，${f.forehead}。准头有肉主聚财，40岁后偏财运渐旺，宜稳健投资。`,
     love: `${f.eyes}，${f.eyebrow}。感情运势佳，异性缘较好，已有伴侣者需防烂桃花，单身者明年有机会。`,
     personality: `${f.forehead}，${f.eyes}。您智慧较高、洞察力强，性格温和而内心坚定，具备良好的人际魅力。`,
     friends: "面相显示人缘佳，口部形态端正者善辩能言。贵人运在西北方向，合作宜选诚信之人。",
@@ -216,7 +216,7 @@ export function getMockImageAnalysis(
     career: `${f.forehead}，${f.mouth}。适合文化、管理、销售类工作，35-45岁为事业黄金期，宜提前布局。`,
   };
   return {
-    summary: `根据您的面相综合分析：${f.forehead}，${f.eyes}，${f.nose}。${f.chin}，五官协调，气色尚佳。命格属中上，整体运势平稳向好，中年后渐入佳境。`,
+    summary: `【麻衣神相】据面相综合分析：${f.forehead}，${f.eyes}，${f.nose}。${f.chin}，三停匀称、五官协调，气色尚佳，属中上之相，中年后运势渐入佳境。`,
     categories,
   };
 }

@@ -8,10 +8,10 @@ import { saveRecord, buildPersonKey, buildPersonLabel } from "@/lib/record-store
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import BoostFortuneButton from "@/components/BoostFortuneButton";
+import MasterPayModal from "@/components/MasterPayModal";
 import Badge from "@/components/ui/Badge";
+import { MASTER_CONSULT_PRICE } from "@/lib/master-pay-store";
 import type { BirthInfo } from "@/lib/types";
-
-const TEST_MODE_FREE = true;
 
 export default function MasterHubPanel() {
   const { user } = useApp();
@@ -24,10 +24,10 @@ export default function MasterHubPanel() {
   const [question, setQuestion] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
+  const [payModal, setPayModal] = useState(false);
 
-  const handleSubmit = () => {
+  const submitConsult = () => {
     if (!name.trim() || !question.trim() || !user) return;
-    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
     submitMasterConsult({
       userId: user.id,
       name: name.trim(),
@@ -48,9 +48,15 @@ export default function MasterHubPanel() {
       personLabel: buildPersonLabel(name.trim(), birth),
       title: "真人大师咨询",
       summary: question.trim().slice(0, 60),
-      data: { question: question.trim(), calendar, birth, status: "pending" },
+      data: { question: question.trim(), calendar, birth, status: "pending", price: MASTER_CONSULT_PRICE },
     });
     setSubmitted(true);
+  };
+
+  const handleSubmit = () => {
+    if (!name.trim() || !question.trim() || !user) return;
+    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
+    setPayModal(true);
   };
 
   if (submitted) {
@@ -59,6 +65,7 @@ export default function MasterHubPanel() {
         <CheckCircle className="mb-4 h-14 w-14 text-app-gold" />
         <h2 className="mb-2 text-lg font-bold text-app-text">提交成功</h2>
         <p className="text-center text-sm text-app-muted">大师将在 24 小时之内回复，请留意「我的 → 消息」</p>
+        <p className="caption mt-2 text-app-gold">本次咨询 ¥{MASTER_CONSULT_PRICE} · 不占用灵丹次数</p>
         <div className="mt-4 max-w-xs">
           <BoostFortuneButton />
         </div>
@@ -71,9 +78,9 @@ export default function MasterHubPanel() {
 
   return (
     <>
-      <p className="caption mb-3 text-app-muted">资深命理师 · 一对一解答</p>
+      <p className="caption mb-3 text-app-muted">资深命理师 · 一对一解答 · 不占用灵丹次数</p>
       <div className="mb-4 text-center">
-        {TEST_MODE_FREE ? <Badge variant="gold">测试期间免费</Badge> : <Badge variant="accent">单次咨询 ¥19.9</Badge>}
+        <Badge variant="accent">单次咨询 ¥{MASTER_CONSULT_PRICE}</Badge>
       </div>
       <div className="app-card space-y-4">
         <div>
@@ -108,10 +115,11 @@ export default function MasterHubPanel() {
             value={question} onChange={(e) => setQuestion(e.target.value)} />
         </div>
         <button onClick={handleSubmit} disabled={!name.trim() || !question.trim()} className="app-btn">
-          提交咨询
+          支付 ¥{MASTER_CONSULT_PRICE} 并提交咨询
         </button>
       </div>
       <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
+      <MasterPayModal open={payModal} onClose={() => setPayModal(false)} onPaid={submitConsult} />
     </>
   );
 }

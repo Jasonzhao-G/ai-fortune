@@ -7,11 +7,11 @@ import { submitMasterConsult } from "@/lib/message-store";
 import { saveRecord, buildPersonKey, buildPersonLabel } from "@/lib/record-store";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import PrimaryPersonModal from "@/components/PrimaryPersonModal";
+import MasterPayModal from "@/components/MasterPayModal";
 import PageHeader from "@/components/ui/PageHeader";
 import Badge from "@/components/ui/Badge";
+import { MASTER_CONSULT_PRICE } from "@/lib/master-pay-store";
 import type { BirthInfo } from "@/lib/types";
-
-const TEST_MODE_FREE = true;
 
 export default function MasterPage() {
   const { user } = useApp();
@@ -24,10 +24,10 @@ export default function MasterPage() {
   const [question, setQuestion] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
+  const [payModal, setPayModal] = useState(false);
 
-  const handleSubmit = () => {
+  const submitConsult = () => {
     if (!name.trim() || !question.trim() || !user) return;
-    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
     submitMasterConsult({
       userId: user.id,
       name: name.trim(),
@@ -48,9 +48,15 @@ export default function MasterPage() {
       personLabel: buildPersonLabel(name.trim(), birth),
       title: "真人大师咨询",
       summary: question.trim().slice(0, 60),
-      data: { question: question.trim(), calendar, birth, status: "pending" },
+      data: { question: question.trim(), calendar, birth, status: "pending", price: MASTER_CONSULT_PRICE },
     });
     setSubmitted(true);
+  };
+
+  const handleSubmit = () => {
+    if (!name.trim() || !question.trim() || !user) return;
+    if (!ensurePrimaryPersonBeforeCalc()) { setPrimaryModal(true); return; }
+    setPayModal(true);
   };
 
   if (submitted) {
@@ -59,10 +65,8 @@ export default function MasterPage() {
         <CheckCircle className="mb-4 h-16 w-16 text-app-gold" />
         <h2 className="mb-2 text-lg font-bold text-app-text">提交成功</h2>
         <p className="mb-1 text-center text-sm text-app-muted">大师将在 24 小时之内回复</p>
-        <p className="text-center text-xs text-app-muted">请留意左上角「我的 → 消息」通知，CRM 后台回复后将推送至此</p>
-        {!TEST_MODE_FREE && (
-          <p className="mt-4 text-xs text-app-muted">本次咨询 ¥19.9（测试期间免费）</p>
-        )}
+        <p className="text-center text-xs text-app-muted">请留意左上角「我的 → 消息」通知</p>
+        <p className="caption mt-4 text-app-gold">本次咨询 ¥{MASTER_CONSULT_PRICE} · 不占用灵丹次数</p>
         <button onClick={() => setSubmitted(false)} className="app-btn-outline mt-6 max-w-xs">
           再次咨询
         </button>
@@ -74,14 +78,10 @@ export default function MasterPage() {
     <>
       <PageHeader
         title="问真人大师"
-        subtitle="资深命理师 · 一对一解答"
+        subtitle="资深命理师 · 一对一解答 · 不占用灵丹次数"
       />
       <div className="mb-4 text-center">
-        {TEST_MODE_FREE ? (
-          <Badge variant="gold">测试期间免费</Badge>
-        ) : (
-          <Badge variant="accent">单次咨询 ¥19.9</Badge>
-        )}
+        <Badge variant="accent">单次咨询 ¥{MASTER_CONSULT_PRICE}</Badge>
       </div>
 
       <div className="app-card space-y-4">
@@ -127,7 +127,7 @@ export default function MasterPage() {
         </div>
 
         <button onClick={handleSubmit} disabled={!name.trim() || !question.trim()} className="app-btn">
-          提交咨询
+          支付 ¥{MASTER_CONSULT_PRICE} 并提交咨询
         </button>
       </div>
 
@@ -136,6 +136,7 @@ export default function MasterPage() {
       </p>
 
       <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />
+      <MasterPayModal open={payModal} onClose={() => setPayModal(false)} onPaid={submitConsult} />
     </>
   );
 }

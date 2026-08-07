@@ -15,6 +15,7 @@ import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import XiangDemoDiagram from "@/components/XiangDemoDiagram";
 import BoostFortuneButton from "@/components/BoostFortuneButton";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import { analyzeXiangImage } from "@/lib/xiang-analyze-client";
 import type { AnalysisResult } from "@/lib/types";
 
 type Tab = "palm" | "face";
@@ -33,6 +34,7 @@ export default function XiangHubPanel() {
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [paywall, setPaywall] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
   const [pendingType, setPendingType] = useState<Tab>("palm");
@@ -43,20 +45,15 @@ export default function XiangHubPanel() {
     const image = pendingPreview.current;
     if (!image) return;
     setLoading(true);
+    setAnalyzeError(null);
     try {
-      const res = await fetch("/api/analyze/image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: pendingType, image }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setResult(data.analysis);
+      const { analysis } = await analyzeXiangImage(pendingType, image);
+      setResult(analysis);
       incrementUsage("xiang");
       addHistory({
         type: "xiang",
         title: pendingType === "palm" ? "手相分析" : "面相分析",
-        data: data.analysis,
+        data: analysis,
       });
       const personName = user?.nickname ?? "看相用户";
       saveRecord({
@@ -65,10 +62,11 @@ export default function XiangHubPanel() {
         personName,
         personLabel: personName,
         title: pendingType === "palm" ? "手相看相" : "面相看相",
-        summary: data.analysis.summary,
-        data: { ...data.analysis, tab: pendingType },
+        summary: analysis.summary,
+        data: { ...analysis, tab: pendingType },
       });
     } catch {
+      setAnalyzeError("分析暂时失败，请重试或更换图片");
       setResult(null);
     } finally {
       setLoading(false);
@@ -130,7 +128,10 @@ export default function XiangHubPanel() {
       )}
 
       {preview && !result && !scanning && (
-        <button onClick={startAnalyze} className="app-btn mt-4">AI 大师看相分析</button>
+        <>
+          <button onClick={startAnalyze} className="app-btn mt-4">AI 大师看相分析</button>
+          {analyzeError && <p className="mt-2 text-center text-xs text-red-400">{analyzeError}</p>}
+        </>
       )}
 
       {result && (

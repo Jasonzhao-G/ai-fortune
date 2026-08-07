@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { PET_BREEDS } from "@/lib/spirit-pet";
 import { PET_CATALOG } from "@/lib/pet-catalog";
 import { AWAKENING_ROADMAP } from "@/lib/spirit-pet-growth";
@@ -9,6 +9,9 @@ import PageHeader from "@/components/ui/PageHeader";
 import BackLink from "@/components/ui/BackLink";
 import SectionCard from "@/components/ui/SectionCard";
 import Badge from "@/components/ui/Badge";
+import SpiritPetBreedModal from "@/components/SpiritPetBreedModal";
+
+const INITIAL_VISIBLE = 3;
 
 interface SpiritPetOnboardingProps {
   onClaim: () => void;
@@ -16,7 +19,18 @@ interface SpiritPetOnboardingProps {
 }
 
 export default function SpiritPetOnboarding({ onClaim, onReturnToPet }: SpiritPetOnboardingProps) {
-  const [expanded, setExpanded] = useState<string | null>(PET_BREEDS[0]?.breedId ?? null);
+  const [showAll, setShowAll] = useState(false);
+  const [modalBreedId, setModalBreedId] = useState<string | null>(null);
+  const [modalTab, setModalTab] = useState<"intro" | "skills">("intro");
+
+  const visibleBreeds = showAll ? PET_BREEDS : PET_BREEDS.slice(0, INITIAL_VISIBLE);
+  const modalPet = PET_BREEDS.find((p) => p.breedId === modalBreedId);
+  const modalCatalog = PET_CATALOG.find((c) => c.breedId === modalBreedId);
+
+  const openModal = (breedId: string) => {
+    setModalBreedId(breedId);
+    setModalTab("intro");
+  };
 
   return (
     <>
@@ -30,52 +44,39 @@ export default function SpiritPetOnboarding({ onClaim, onReturnToPet }: SpiritPe
       />
 
       <p className="section-label">灵兽图鉴</p>
-      <div className="page-section space-y-2">
-        {PET_BREEDS.map((pet) => {
+      <div className="page-section grid grid-cols-3 gap-2">
+        {visibleBreeds.map((pet) => {
           const catalog = PET_CATALOG.find((c) => c.breedId === pet.breedId);
-          const open = expanded === pet.breedId;
           return (
-            <div key={pet.breedId} className="app-card overflow-hidden !p-0 !mb-2">
-              <button
-                type="button"
-                onClick={() => setExpanded(open ? null : pet.breedId)}
-                className="flex w-full items-center gap-3 p-3 text-left"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-app-accent/20 to-app-gold/10 text-2xl spirit-pet-float">
-                  {pet.emoji}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="block-title">
-                    {pet.baseName}
-                    {catalog?.needShort && (
-                      <Badge variant="gold" className="ml-1.5 align-middle">{catalog.needShort}</Badge>
-                    )}
-                  </p>
-                  <p className="caption mt-0.5">{pet.keywords}</p>
-                  <p className="caption mt-0.5 line-clamp-1 text-app-accent">{pet.lore}</p>
-                </div>
-                {open ? <ChevronUp className="h-4 w-4 shrink-0 text-app-muted" /> : <ChevronDown className="h-4 w-4 shrink-0 text-app-muted" />}
-              </button>
-
-              {open && catalog && (
-                <div className="border-t border-app-border bg-app-bg/30 px-3 pb-3 pt-2">
-                  <p className="caption mb-2">
-                    <span className="font-semibold text-app-text">适合：</span>{catalog.suitableFor}
-                  </p>
-                  <p className="caption mb-1.5 font-semibold text-app-gold">核心技能</p>
-                  <div className="mb-2 flex flex-wrap gap-1">
-                    {catalog.skills.map((s) => (
-                      <span key={s} className="chip caption !py-0.5">{s}</span>
-                    ))}
-                  </div>
-                  <p className="caption mb-1 font-semibold text-app-gold">觉醒历程</p>
-                  <p className="caption leading-relaxed">{catalog.awakeningJourney}</p>
-                </div>
+            <button
+              key={pet.breedId}
+              type="button"
+              onClick={() => openModal(pet.breedId)}
+              className="app-card flex flex-col items-center !p-3 text-center transition-transform hover:scale-[1.02]"
+            >
+              <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-app-accent/20 to-app-gold/10 text-3xl spirit-pet-float">
+                {pet.emoji}
+              </div>
+              <p className="block-title text-[13px]">{pet.baseName}</p>
+              {catalog?.needShort && (
+                <Badge variant="gold" className="mt-1 !text-[10px]">{catalog.needShort}</Badge>
               )}
-            </div>
+              <p className="caption mt-1 line-clamp-2 text-[10px]">{pet.keywords}</p>
+            </button>
           );
         })}
       </div>
+
+      {!showAll && PET_BREEDS.length > INITIAL_VISIBLE && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="app-btn-outline mx-auto mb-4 flex max-w-xs items-center justify-center gap-1"
+        >
+          <ChevronDown className="h-4 w-4" />
+          展开全部 {PET_BREEDS.length} 只灵兽图鉴
+        </button>
+      )}
 
       <SectionCard variant="accent" title="通用觉醒进阶" subtitle="所有灵宠共享 · 通过任务积累灵力">
         <div className="space-y-2">
@@ -100,6 +101,16 @@ export default function SpiritPetOnboarding({ onClaim, onReturnToPet }: SpiritPe
             填写姓名、生辰、出生地点与性格偏好 · 系统将匹配命格专属灵宠
           </p>
         </div>
+      )}
+
+      {modalPet && modalCatalog && (
+        <SpiritPetBreedModal
+          pet={modalPet}
+          catalog={modalCatalog}
+          tab={modalTab}
+          onClose={() => setModalBreedId(null)}
+          onTabChange={setModalTab}
+        />
       )}
     </>
   );

@@ -747,6 +747,51 @@
   border: 2px solid color-mix(in srgb, var(--color-gold) 70%, transparent);
 }
 
+/* ─── Spirit beast visual demo ─── */
+@keyframes spirit-beast-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.spirit-beast-float { animation: spirit-beast-float 4s ease-in-out infinite; }
+
+@keyframes spirit-beast-breathe {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.03); filter: brightness(1.06); }
+}
+.spirit-beast-breathe { animation: spirit-beast-breathe 3.2s ease-in-out infinite; }
+
+@keyframes spirit-beast-glow-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+.spirit-beast-glow { animation: spirit-beast-glow-pulse 3.5s ease-in-out infinite; }
+
+@keyframes spirit-beast-mist-drift-a {
+  0% { transform: translateX(-8%) translateY(0); opacity: 0.35; }
+  50% { transform: translateX(6%) translateY(-2%); opacity: 0.5; }
+  100% { transform: translateX(-8%) translateY(0); opacity: 0.35; }
+}
+@keyframes spirit-beast-mist-drift-b {
+  0% { transform: translateX(10%) translateY(2%); opacity: 0.25; }
+  50% { transform: translateX(-5%) translateY(-1%); opacity: 0.4; }
+  100% { transform: translateX(10%) translateY(2%); opacity: 0.25; }
+}
+.spirit-beast-mist-a {
+  background: radial-gradient(ellipse 80% 40% at 30% 60%, rgba(94, 196, 196, 0.12) 0%, transparent 70%);
+  animation: spirit-beast-mist-drift-a 12s ease-in-out infinite;
+}
+.spirit-beast-mist-b {
+  background: radial-gradient(ellipse 70% 35% at 70% 55%, rgba(212, 165, 116, 0.1) 0%, transparent 65%);
+  animation: spirit-beast-mist-drift-b 15s ease-in-out infinite;
+}
+
+@keyframes spirit-beast-ripple {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.35; }
+  50% { transform: translateX(-50%) scale(1.04); opacity: 0.55; }
+}
+.spirit-beast-ripple { animation: spirit-beast-ripple 4s ease-in-out infinite; }
+.spirit-beast-ripple-delay { animation-delay: 2s; }
+
 .spirit-level-up-ring-delay {
   animation: spirit-level-up-ring 1.4s ease-out 0.45s infinite;
   border: 2px solid color-mix(in srgb, var(--color-accent) 55%, transparent);

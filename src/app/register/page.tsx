@@ -98,9 +98,9 @@ export default function RegisterPage() {
     <div className="px-4 pb-8 pt-4">
       <div className="mb-6 text-center">
         <span className="text-3xl">{BRAND_LOGO}</span>
-        <h1 className="page-title mt-2">注册 {BRAND_NAME}</h1>
+        <h1 className="page-title mt-2">注册 / 登录 {BRAND_NAME}</h1>
         <p className="text-xs text-app-muted">
-          {refCode ? "好友邀请您加入，注册即享灵丹礼包" : "创建账号，开启命理之旅"}
+          {refCode ? "好友邀请您加入，注册即享灵丹礼包" : "手机号验证码注册登录，开启命理之旅"}
         </p>
       </div>
 
@@ -164,7 +164,7 @@ export default function RegisterPage() {
       {error && <p className="mb-3 text-center text-xs text-red-400">{error}</p>}
       {success && <p className="mb-3 text-center text-xs text-app-green">注册成功，正在进入…</p>}
 
-      <button onClick={handleRegister} className="app-btn">完成注册</button>
+      <button onClick={handleRegister} className="app-btn">完成注册 / 登录</button>
 
       <p className="mt-4 text-center text-[10px] text-app-muted">
         已有账号？<Link href="/" className="text-app-accent">直接进入</Link>

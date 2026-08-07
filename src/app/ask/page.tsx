@@ -176,9 +176,6 @@ function AskPageContent() {
             <MessageCircle className="h-5 w-5" />
             与专属 AI 灵宠对话
           </button>
-          <div className="mt-2">
-            <BoostFortuneButton />
-          </div>
         </section>
       )}
 
@@ -245,6 +242,9 @@ function AskPageContent() {
         <section className="page-section pb-4">
           <SpiritPetMatchFriendsButton unlocked={level >= 2} />
           <SpiritPetFortuneStick pet={pet} personKey={personKey} birth={normalizedBirth} />
+          <div className="mt-3">
+            <BoostFortuneButton />
+          </div>
           <SpiritPetDailyAdvice pet={pet} birth={normalizedBirth} />
         </section>
       )}

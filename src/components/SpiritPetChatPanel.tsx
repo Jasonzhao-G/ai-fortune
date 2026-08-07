@@ -11,6 +11,7 @@ import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import { grantSpiritPowerForTask } from "@/lib/spirit-pet-tasks";
 import { getSpiritAbilityPrompt } from "@/lib/spirit-pet-ask";
+import SpiritPetDisplay from "@/components/SpiritPetDisplay";
 import type { BirthInfo, SpiritPetProfile } from "@/lib/types";
 
 interface ChatMessage {
@@ -251,7 +252,10 @@ export default function SpiritPetChatPanel({
   if (variant === "modal") {
     return (
       <div className={`fixed inset-0 z-[75] flex items-end justify-center bg-black/50 px-3 pb-4 backdrop-blur-sm sm:items-center ${className}`}>
-        <div className="w-full max-w-lg">
+        <div className="flex max-h-[92vh] w-full max-w-lg flex-col gap-3 overflow-y-auto">
+          {pet && (
+            <SpiritPetDisplay pet={pet} personName={ownerName} compact />
+          )}
           {chatBody}
         </div>
         <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="问AI灵宠" />
@@ -262,6 +266,11 @@ export default function SpiritPetChatPanel({
 
   return (
     <section className={`page-section ${className}`}>
+      {pet && (
+        <div className="mb-3">
+          <SpiritPetDisplay pet={pet} personName={ownerName} compact />
+        </div>
+      )}
       {chatBody}
       <PaywallModal open={paywall} onClose={() => setPaywall(false)} feature="问AI灵宠" />
       <PrimaryPersonModal open={primaryModal} onClose={() => setPrimaryModal(false)} />

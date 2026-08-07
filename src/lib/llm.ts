@@ -21,8 +21,12 @@ export { MOCK_MODE };
 
 function buildSystemPrompt(type: "bazi" | "palm" | "face"): string {
   const typeLabel = { bazi: "八字命理", palm: "手相", face: "面相" }[type];
-  return `你是一位精通中国传统命理学的资深大师，擅长${typeLabel}分析。
-请根据用户提供的信息，给出专业、详尽且积极正面的命理分析。
+  const mayiNote =
+    type === "face" || type === "palm"
+      ? "分析请参考中国古代《麻衣神相》体系，结合十二宫、三停五岳、五官六府等经典相法术语，"
+      : "";
+  return `你是一位精通中国传统命理学与《麻衣神相》的资深相师，擅长${typeLabel}分析。
+${mayiNote}请根据用户提供的信息，给出专业、详尽且积极正面的命理分析。
 
 必须严格以 JSON 格式返回，不要包含任何 markdown 代码块或其他文字：
 {
@@ -141,7 +145,7 @@ export function buildBaziPrompt(baziText: string): string {
 
 export function buildImagePrompt(type: "palm" | "face", description: string): string {
   const label = type === "palm" ? "手相" : "面相";
-  return `请根据以下${label}特征描述进行详细分析：\n\n${description}`;
+  return `请依照《麻衣神相》相法，根据以下${label}特征描述进行详细分析（引用印堂、山根、准头、法令纹等相理术语）：\n\n${description}`;
 }
 
 export function getImageAnalysisDescription(type: "palm" | "face"): string {
@@ -154,14 +158,15 @@ export function getImageAnalysisDescription(type: "palm" | "face"): string {
 - 财运线：不明显但无断纹，财运平稳
 - 手型：方形手，做事踏实`;
   }
-  return `面相特征（基于图像识别）：
-- 额头：宽阔饱满，智慧较高
-- 眉毛：浓淡适中，性格温和
-- 眼睛：有神，洞察力强
-- 鼻子：鼻梁挺直，财运中等偏上
-- 嘴巴：唇形端正，口才较好
-- 下巴：圆润，晚年运势佳
-- 整体：五官协调，气色红润`;
+  return `面相特征（麻衣神相 · 基于图像识别）：
+- 天庭（额部）：宽阔饱满，主智慧早显，少年运佳
+- 眉相：浓淡适中，眉顺不散，主性情温和
+- 眼相：眼有神采，黑白分明，主洞察力强、识人善任
+- 鼻相：准头圆润有肉，主聚财；山根不低，中年运稳
+- 口相：唇厚色润，言出必行，主口福与人缘
+- 法令纹：深浅适中，主晚年有靠
+- 十二宫：命宫光润，财帛宫饱满，事业宫有势
+- 整体：五官协调，气色尚佳，属中上之相`;
 }
 
 async function analyzeImageWithVision(
