@@ -8,7 +8,7 @@ const PETS_KEY = "ai-fortune-spirit-pets";
 const SWAPS_KEY = "ai-fortune-pet-swaps";
 const DESTINED_KEY = "ai-fortune-destined-pets";
 
-export const MAX_PET_SWAPS = 0;
+export const MAX_PET_SWAPS = 2;
 
 type Wuxing = "金" | "木" | "水" | "火" | "土";
 
@@ -210,6 +210,17 @@ function getSwapCounts(): Record<string, number> {
   } catch {
     return {};
   }
+}
+
+function saveSwapCounts(all: Record<string, number>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SWAPS_KEY, JSON.stringify(all));
+  } catch { /* ignore */ }
+}
+
+function getPetSwapCount(personKey: string): number {
+  return getSwapCounts()[personKey] ?? 0;
 }
 
 function saveDestinedPet(personKey: string, profile: SpiritPetProfile) {
@@ -442,8 +453,8 @@ function normalizeStoredPet(stored: SpiritPetProfile, personKey: string, info: B
   return normalizePetGrowth(merged);
 }
 
-export function claimSpiritPet(personKey: string, info: BirthInfo): SpiritPetProfile {
-  const profile = buildSpiritPetFromBreed(personKey, info, undefined, true);
+export function claimSpiritPet(personKey: string, info: BirthInfo, breedId?: string): SpiritPetProfile {
+  const profile = buildSpiritPetFromBreed(personKey, info, breedId, true);
   savePet(profile);
   saveDestinedPet(personKey, profile);
   return profile;
@@ -472,16 +483,46 @@ export function updateSpiritPet(pet: SpiritPetProfile): SpiritPetProfile {
   return updated;
 }
 
-export function getRemainingSwaps(_personKey: string): number {
-  return 0;
+export function getRemainingSwaps(personKey: string): number {
+  return Math.max(0, MAX_PET_SWAPS - getPetSwapCount(personKey));
+}
+
+export function canSwapSpiritPet(personKey: string): boolean {
+  return getRemainingSwaps(personKey) > 0;
+}
+
+export function swapSpiritPet(
+  personKey: string,
+  info: BirthInfo,
+  breedId: string,
+): { ok: boolean; pet?: SpiritPetProfile; error?: string } {
+  if (!canSwapSpiritPet(personKey)) {
+    return { ok: false, error: `每人最多更换 ${MAX_PET_SWAPS} 次守护灵宠，您已用完次数` };
+  }
+  const existing = getStoredPets()[personKey];
+  const profile = buildSpiritPetFromBreed(personKey, info, breedId, true);
+  if (existing) {
+    profile.level = existing.level ?? profile.level;
+    profile.spiritPower = existing.spiritPower ?? profile.spiritPower;
+  }
+  savePet(profile);
+  saveDestinedPet(personKey, profile);
+  const counts = getSwapCounts();
+  counts[personKey] = (counts[personKey] ?? 0) + 1;
+  saveSwapCounts(counts);
+  return { ok: true, pet: normalizePetGrowth(profile) };
 }
 
 export function getPetAlternatives(_personKey: string, _info: BirthInfo): SpiritPetProfile[] {
   return [];
 }
 
-export function changeSpiritPet(_personKey: string, _profile: SpiritPetProfile): { ok: boolean; pet?: SpiritPetProfile; error?: string } {
-  return { ok: false, error: "灵宠是与你命格绑定的 AI 生命伙伴，不支持更换品种" };
+export function changeSpiritPet(
+  personKey: string,
+  info: BirthInfo,
+  breedId: string,
+): { ok: boolean; pet?: SpiritPetProfile; error?: string } {
+  return swapSpiritPet(personKey, info, breedId);
 }
 
 export function getSpiritPetForPerson(personKey: string, info: BirthInfo): SpiritPetProfile | null {

@@ -5,6 +5,8 @@ import { PET_BREEDS } from "@/lib/spirit-pet";
 import { PET_CATALOG } from "@/lib/pet-catalog";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import Badge from "@/components/ui/Badge";
+import SpiritPetMediaAvatar from "@/components/SpiritPetMediaAvatar";
+import SpiritPetBreedVideo from "@/components/SpiritPetBreedVideo";
 
 type PetBreed = (typeof PET_BREEDS)[number];
 type PetCatalogEntry = (typeof PET_CATALOG)[number];
@@ -15,6 +17,10 @@ interface SpiritPetBreedModalProps {
   tab: "intro" | "skills";
   onClose: () => void;
   onTabChange: (tab: "intro" | "skills") => void;
+  /** 图鉴更换模式：显示领养按钮 */
+  showAdopt?: boolean;
+  onAdopt?: () => void;
+  adoptHint?: string;
 }
 
 export default function SpiritPetBreedModal({
@@ -23,6 +29,9 @@ export default function SpiritPetBreedModal({
   tab,
   onClose,
   onTabChange,
+  showAdopt,
+  onAdopt,
+  adoptHint,
 }: SpiritPetBreedModalProps) {
   return (
     <div
@@ -35,9 +44,7 @@ export default function SpiritPetBreedModal({
       >
         <div className="mb-4 flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-app-accent/20 to-app-gold/10 text-3xl spirit-pet-float">
-              {pet.emoji}
-            </div>
+            <SpiritPetMediaAvatar breedId={pet.breedId} emoji={pet.emoji} size="md" />
             <div>
               <p className="heading-3">{pet.baseName}</p>
               <p className="caption">{pet.displayName} · {pet.keywords}</p>
@@ -63,6 +70,8 @@ export default function SpiritPetBreedModal({
           className="!mb-4"
         />
 
+        <SpiritPetBreedVideo breedId={pet.breedId} emoji={pet.emoji} className="mb-4 min-h-[200px]" />
+
         {tab === "intro" ? (
           <div className="space-y-3 body-text">
             <p className="heading-3 text-app-gold">{pet.displayName}</p>
@@ -87,6 +96,15 @@ export default function SpiritPetBreedModal({
               <p className="caption mb-2 font-semibold text-app-accent">觉醒历程</p>
               <p className="caption leading-relaxed">{catalog.awakeningJourney}</p>
             </div>
+          </div>
+        )}
+
+        {showAdopt && onAdopt && (
+          <div className="mt-4 border-t border-app-border pt-4">
+            {adoptHint && <p className="caption mb-2 text-center text-app-muted">{adoptHint}</p>}
+            <button type="button" onClick={onAdopt} className="app-btn w-full">
+              ✨ 领养 {pet.baseName}
+            </button>
           </div>
         )}
       </div>

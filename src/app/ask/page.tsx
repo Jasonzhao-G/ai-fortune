@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useLayoutEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MessageCircle } from "lucide-react";
 import SpiritPetChatPanel from "@/components/SpiritPetChatPanel";
 import AiAskBox from "@/components/AiAskBox";
 import SpiritPetFortuneStick from "@/components/SpiritPetFortuneStick";
@@ -24,6 +23,7 @@ import {
 } from "@/lib/spirit-pet-growth";
 import { getSpiritPetTimeGreeting } from "@/lib/spirit-pet-greeting";
 import BoostFortuneButton from "@/components/BoostFortuneButton";
+import SpiritPetMediaAvatar from "@/components/SpiritPetMediaAvatar";
 import type { BirthInfo, SpiritPetProfile } from "@/lib/types";
 
 function AskPageContent() {
@@ -37,7 +37,6 @@ function AskPageContent() {
   const [personKey, setPersonKey] = useState("");
   const [personName, setPersonName] = useState("主人");
   const [ready, setReady] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -58,15 +57,26 @@ function AskPageContent() {
     }
   }, []);
 
-  useEffect(() => {
-    if (fromSpiritPet) {
-      window.scrollTo(0, 0);
+  useLayoutEffect(() => {
+    if (!ready || !fromSpiritPet) return;
+    const section = searchParams.get("section");
+    if (section === "daily-fortune" || section === "今日运势指引") return;
+    if (
+      abilityParam &&
+      !abilityParam.includes("灵签") &&
+      !abilityParam.includes("运势指引")
+    ) {
+      return;
     }
-  }, [fromSpiritPet]);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [ready, fromSpiritPet, abilityParam, searchParams]);
 
   useEffect(() => {
     if (!abilityParam || abilityParam.includes("灵签") || abilityParam.includes("运势指引")) return;
-    setChatOpen(true);
+    const timer = window.setTimeout(() => {
+      document.getElementById("spirit-pet-chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => window.clearTimeout(timer);
   }, [abilityParam]);
 
   const level = pet ? normalizeLevel(pet.level ?? 1) : 1;
@@ -86,7 +96,9 @@ function AskPageContent() {
       params.set("from", "spirit-pet");
       params.set("ability", name);
       router.push(`/ask?${params.toString()}`, { scroll: false });
-      setChatOpen(true);
+      window.setTimeout(() => {
+        document.getElementById("spirit-pet-chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
     },
     [router, searchParams],
   );
@@ -125,9 +137,9 @@ function AskPageContent() {
         <div className="app-card panel-gold mb-4 overflow-hidden">
           <div className="flex items-start gap-3">
             <div
-              className={`spirit-level-badge ${getLevelTierClass(level)} flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center rounded-2xl`}
+              className={`spirit-level-badge ${getLevelTierClass(level)} flex h-[112px] w-[112px] shrink-0 items-center justify-center overflow-hidden rounded-2xl p-1 sm:h-[120px] sm:w-[120px]`}
             >
-              <span className="text-5xl">{pet.emoji}</span>
+              <SpiritPetMediaAvatar breedId={pet.breedId} emoji={pet.emoji} size="2xl" className="!h-full !w-full !rounded-2xl" />
             </div>
             <div className="min-w-0 flex-1 pt-1">
               <p className="rounded-2xl border border-app-gold/30 bg-app-gold/10 px-3 py-2.5 text-[15px] font-semibold leading-snug text-app-text">
@@ -167,27 +179,14 @@ function AskPageContent() {
       )}
 
       {pet && (
-        <section className="page-section">
-          <button
-            type="button"
-            onClick={() => setChatOpen(true)}
-            className="app-btn flex w-full items-center justify-center gap-2"
-          >
-            <MessageCircle className="h-5 w-5" />
-            与专属 AI 灵宠对话
-          </button>
-        </section>
-      )}
-
-      {chatOpen && pet && (
         <SpiritPetChatPanel
           key={abilityParam ?? "default"}
-          variant="modal"
+          variant="page"
+          showPetProfile={false}
           pet={pet}
           personName={personName}
           birthInfo={normalizedBirth}
           initialAbility={abilityParam?.includes("灵签") ? null : abilityParam}
-          onClose={() => setChatOpen(false)}
         />
       )}
 

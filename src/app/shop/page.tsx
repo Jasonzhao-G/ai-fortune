@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Package, ChevronLeft } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import PageCarouselBanner from "@/components/PageCarouselBanner";
@@ -26,11 +26,28 @@ import { cn } from "@/lib/utils";
 import { ShopEmojiDisplay } from "@/components/icons/SpiritGourdIcon";
 
 export default function ShopPage() {
+  return (
+    <Suspense fallback={<p className="caption text-center text-app-muted">加载商城…</p>}>
+      <ShopPageContent />
+    </Suspense>
+  );
+}
+
+function ShopPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useApp();
   const [section, setSection] = useState<ShopSection>("virtual");
   const [activeShelf, setActiveShelf] = useState<ShopShelfId | null>(null);
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
+
+  useEffect(() => {
+    const s = searchParams.get("section");
+    if (s === "virtual" || s === "physical" || s === "hardware") {
+      setSection(s);
+      setActiveShelf(null);
+    }
+  }, [searchParams]);
 
   const shelves = getShelvesBySection(section);
   const shelf = activeShelf ? getShelfById(activeShelf) : null;

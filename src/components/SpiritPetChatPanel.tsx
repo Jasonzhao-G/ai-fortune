@@ -12,6 +12,7 @@ import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import { grantSpiritPowerForTask } from "@/lib/spirit-pet-tasks";
 import { getSpiritAbilityPrompt } from "@/lib/spirit-pet-ask";
 import SpiritPetDisplay from "@/components/SpiritPetDisplay";
+import SpiritPetMediaAvatar from "@/components/SpiritPetMediaAvatar";
 import type { BirthInfo, SpiritPetProfile } from "@/lib/types";
 
 interface ChatMessage {
@@ -26,7 +27,17 @@ const MOCK_ANSWERS: Record<string, string> = {
   颜色: "今日宜穿红色、紫色系衣物，有助于提升气场。",
   贵人: "您的贵人位在西北方向，多留意此方向的机遇。",
   跳槽: "当前并非最佳跳槽时机，建议再观察3-6个月。",
+  财运: "今年财运稳中向好，上半年宜守财，下半年可适度拓展副业与理财。",
+  真命天子: "姻缘星动，明年春夏桃花渐旺，留意西北方向出现的缘分。",
 };
+
+export const SPIRIT_PET_CHAT_PROMPTS = [
+  "我今天的运势怎么样？",
+  "我今天适合穿什么颜色的衣服？",
+  "我今年财运如何？",
+  "我今年是否适合跳槽？",
+  "我的真命天子将会在什么时候出现？",
+];
 
 function mockAnswer(q: string): string {
   for (const [key, ans] of Object.entries(MOCK_ANSWERS)) {
@@ -41,8 +52,10 @@ interface SpiritPetChatPanelProps {
   birthInfo?: BirthInfo | null;
   initialAbility?: string | null;
   className?: string;
-  /** modal：弹层聊天；page：带区块标题 */
+  /** modal：弹层聊天；page：内嵌页面 */
   variant?: "page" | "modal";
+  /** page 模式下是否显示上方灵宠档案卡片 */
+  showPetProfile?: boolean;
   onClose?: () => void;
 }
 
@@ -53,6 +66,7 @@ export default function SpiritPetChatPanel({
   initialAbility,
   className = "",
   variant = "page",
+  showPetProfile = true,
   onClose,
 }: SpiritPetChatPanelProps) {
   const { user } = useApp();
@@ -63,7 +77,7 @@ export default function SpiritPetChatPanel({
   const [paywall, setPaywall] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
   const [remaining, setRemaining] = useState(5);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const seededAbility = useRef<string | null>(null);
 
   useEffect(() => {
@@ -79,7 +93,9 @@ export default function SpiritPetChatPanel({
   }, [birthInfoProp]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages.length, loading]);
 
   const appendPetGreeting = useCallback(() => {
@@ -169,9 +185,13 @@ export default function SpiritPetChatPanel({
   const chatBody = (
     <div className={`app-card flex flex-col overflow-hidden !p-0 ${variant === "modal" ? "max-h-[min(78vh,560px)]" : "min-h-[320px]"}`}>
       <div className="flex items-center gap-2 border-b border-app-border px-3 py-2.5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-app-accent/15 text-lg">
-          {petEmoji}
-        </span>
+        {pet ? (
+          <SpiritPetMediaAvatar breedId={pet.breedId} emoji={petEmoji} size="sm" className="shrink-0 border border-app-accent/20" />
+        ) : (
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-app-accent/15 text-lg">
+            {petEmoji}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-app-text">
             {pet?.fullName ?? "AI 灵宠"}
@@ -185,15 +205,23 @@ export default function SpiritPetChatPanel({
         )}
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3" style={{ maxHeight: variant === "modal" ? "min(52vh, 380px)" : "min(52vh, 420px)" }}>
+      <div
+        ref={messagesRef}
+        className="flex-1 space-y-3 overflow-y-auto px-3 py-3"
+        style={{ maxHeight: variant === "modal" ? "min(52vh, 380px)" : "min(52vh, 420px)" }}
+      >
           {messages.map((m) => {
             const mine = m.role === "user";
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 {!mine && (
-                  <span className="mr-1.5 mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-app-accent/10 text-sm">
-                    {petEmoji}
-                  </span>
+                  <SpiritPetMediaAvatar
+                    breedId={pet?.breedId ?? ""}
+                    emoji={petEmoji}
+                    size="xs"
+                    className="mr-1.5 mt-1 shrink-0 border border-app-border/50"
+                    animate={false}
+                  />
                 )}
                 <div
                   className={`max-w-[78%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
@@ -209,15 +237,18 @@ export default function SpiritPetChatPanel({
           })}
           {loading && (
             <div className="flex justify-start">
-              <span className="mr-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-app-accent/10 text-sm">
-                {petEmoji}
-              </span>
+              <SpiritPetMediaAvatar
+                breedId={pet?.breedId ?? ""}
+                emoji={petEmoji}
+                size="xs"
+                className="mr-1.5 shrink-0 border border-app-border/50"
+                animate={false}
+              />
               <div className="rounded-2xl rounded-bl-md border border-app-border bg-app-bg px-3 py-2 text-xs text-app-muted animate-pulse">
                 正在输入…
               </div>
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
 
         {/* 输入区 */}
@@ -245,6 +276,20 @@ export default function SpiritPetChatPanel({
               <Send className="h-4 w-4" />
             </button>
           </div>
+          <p className="caption mb-1.5 mt-3 text-app-muted">试试这样问</p>
+          <div className="flex flex-wrap gap-1.5">
+            {SPIRIT_PET_CHAT_PROMPTS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => sendMessage(p)}
+                disabled={!birthInfo || loading}
+                className="rounded-full border border-app-border px-2.5 py-1 text-[10px] text-app-muted transition-colors hover:border-app-accent hover:text-app-accent disabled:opacity-40"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
     </div>
   );
@@ -253,8 +298,8 @@ export default function SpiritPetChatPanel({
     return (
       <div className={`fixed inset-0 z-[75] flex items-end justify-center bg-black/50 px-3 pb-4 backdrop-blur-sm sm:items-center ${className}`}>
         <div className="flex max-h-[92vh] w-full max-w-lg flex-col gap-3 overflow-y-auto">
-          {pet && (
-            <SpiritPetDisplay pet={pet} personName={ownerName} compact />
+          {showPetProfile && pet && (
+            <SpiritPetDisplay pet={pet} personName={ownerName} compact showInteractLink={false} />
           )}
           {chatBody}
         </div>
@@ -265,10 +310,10 @@ export default function SpiritPetChatPanel({
   }
 
   return (
-    <section className={`page-section ${className}`}>
-      {pet && (
+    <section id="spirit-pet-chat" className={`page-section ${className}`}>
+      {showPetProfile && pet && (
         <div className="mb-3">
-          <SpiritPetDisplay pet={pet} personName={ownerName} compact />
+          <SpiritPetDisplay pet={pet} personName={ownerName} compact showInteractLink={false} />
         </div>
       )}
       {chatBody}

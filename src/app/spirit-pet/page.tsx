@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { UserCircle, MessageCircle, BookOpen, ShoppingBag } from "lucide-react";
+import { UserCircle, BookOpen, ShoppingBag } from "lucide-react";
 import SpiritPetStageIntro from "@/components/SpiritPetStageIntro";
 import SpiritPetMatchFriendsButton from "@/components/SpiritPetMatchFriendsButton";
 import { normalizeLevel, getStageForLevel, formatLevelBadge, getCumulativeAbilities, AWAKENING_STAGES } from "@/lib/spirit-pet-growth";
@@ -12,6 +12,10 @@ import {
   getPersonKey,
   claimSpiritPet,
   generateSpiritPetWelcome,
+  getRemainingSwaps,
+  canSwapSpiritPet,
+  swapSpiritPet,
+  PET_BREEDS,
 } from "@/lib/spirit-pet";
 import type { SpiritPetAdvice, SpiritPetProfile, BirthInfo } from "@/lib/types";
 import { normalizeBirthInfo } from "@/lib/birth-store";
@@ -56,6 +60,8 @@ function SpiritPetPageContent() {
   const [avatarTip, setAvatarTip] = useState<string | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [genTip, setGenTip] = useState(GEN_STEPS[0]);
+  const [swapMode, setSwapMode] = useState(false);
+  const [swapError, setSwapError] = useState<string | null>(null);
   const tasksRef = useRef<HTMLDivElement>(null);
   const awakeningRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +72,12 @@ function SpiritPetPageContent() {
   const scrollToAwakening = useCallback(() => {
     awakeningRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
+
+  useLayoutEffect(() => {
+    if (phase === "onboarding") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  }, [phase]);
 
   useLayoutEffect(() => {
     try {
@@ -151,6 +163,43 @@ function SpiritPetPageContent() {
     setTimeout(() => setAvatarTip(null), 2500);
   };
 
+  const handleChangePet = () => {
+    if (!personKey) return;
+    if (!canSwapSpiritPet(personKey)) {
+      setSwapError(`每人最多更换 2 次守护灵宠，您已用完次数`);
+      return;
+    }
+    const remaining = getRemainingSwaps(personKey);
+    const ok = window.confirm(
+      `更换守护灵宠将替换当前灵兽，等级与灵力会保留。\n每人最多更换 2 次，当前剩余 ${remaining} 次。\n\n确定前往图鉴选择新灵兽吗？`,
+    );
+    if (!ok) return;
+    setSwapError(null);
+    setSwapMode(true);
+    setPhase("onboarding");
+  };
+
+  const handleAdoptBreed = (breedId: string) => {
+    if (!birth || !personKey) return;
+    const breedName = PET_BREEDS.find((b) => b.breedId === breedId)?.baseName ?? "灵兽";
+    const remaining = getRemainingSwaps(personKey);
+    const ok = window.confirm(`确定领养「${breedName}」作为新的守护灵宠吗？\n更换后剩余 ${remaining - 1} 次机会。`);
+    if (!ok) return;
+
+    const result = swapSpiritPet(personKey, birth, breedId);
+    if (!result.ok || !result.pet) {
+      setSwapError(result.error ?? "更换失败");
+      return;
+    }
+
+    setPet(result.pet);
+    setAdvice(generateSpiritPetAdvice(birth, result.pet, "day"));
+    setSwapMode(false);
+    setSwapError(null);
+    setPhase("companion");
+    window.dispatchEvent(new Event("spirit-pet-refresh"));
+  };
+
   if (!ready || phase === "initializing") {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center">
@@ -163,10 +212,28 @@ function SpiritPetPageContent() {
   if (phase === "onboarding") {
     const hasClaimedPet = !!pet?.claimed;
     return (
-      <SpiritPetOnboarding
-        onClaim={() => setPhase("claim")}
-        onReturnToPet={hasClaimedPet ? () => setPhase("companion") : undefined}
-      />
+      <>
+        {swapError && (
+          <p className="caption mb-3 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-center text-red-400">
+            {swapError}
+          </p>
+        )}
+        <SpiritPetOnboarding
+          onClaim={() => setPhase("claim")}
+          onReturnToPet={
+            hasClaimedPet
+              ? () => {
+                  setSwapMode(false);
+                  setSwapError(null);
+                  setPhase("companion");
+                }
+              : undefined
+          }
+          swapMode={swapMode && hasClaimedPet}
+          remainingSwaps={personKey ? getRemainingSwaps(personKey) : 0}
+          onAdoptBreed={swapMode && hasClaimedPet ? handleAdoptBreed : undefined}
+        />
+      </>
     );
   }
 
@@ -217,12 +284,28 @@ function SpiritPetPageContent() {
       <PageHeader title="AI 灵宠" subtitle="陪伴成长 · 觉醒升级" />
       <PageCarouselBanner slides={PAGE_BANNERS["spirit-pet"]} className="!mb-3 !pt-0" />
 
-      <SpiritPetDisplay pet={pet} personName={personName} onGoAwakening={scrollToAwakening} />
+      <SpiritPetDisplay
+        pet={pet}
+        personName={personName}
+        onGoAwakening={scrollToAwakening}
+        onChangePet={handleChangePet}
+      />
+
+      {swapError && (
+        <p className="caption mb-3 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-center text-red-400">
+          {swapError}
+        </p>
+      )}
 
       <section className="page-section !mt-3 !mb-3">
         <button
           type="button"
-          onClick={() => setPhase("onboarding")}
+          onClick={() => {
+            setSwapMode(false);
+            setSwapError(null);
+            setPhase("onboarding");
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          }}
           className="app-btn-gold flex w-full items-center justify-center gap-2"
         >
           <BookOpen className="h-5 w-5" />
@@ -241,13 +324,6 @@ function SpiritPetPageContent() {
           </ul>
         </SectionCard>
       )}
-
-      <section className="page-section">
-        <Link href="/ask?from=spirit-pet" className="app-btn flex items-center justify-center gap-2">
-          <MessageCircle className="h-5 w-5" />
-          马上跟我的灵宠互动
-        </Link>
-      </section>
 
       <section ref={awakeningRef} id="spirit-awakening" className="page-section scroll-mt-4">
         <SpiritPetAwakeningPanel pet={pet} onGoTasks={scrollToTasks} />
