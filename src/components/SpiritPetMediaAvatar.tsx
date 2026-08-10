@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { getSpiritBeastAsset } from "@/lib/spirit-beast-assets";
 
@@ -24,6 +24,80 @@ const SIZE_CLASS = {
   "3xl": "h-44 w-44 text-8xl",
 } as const;
 
+function SpiritPetVideoAvatar({
+  src,
+  fallbackAvatar,
+  className,
+  breatheClass,
+  onFailed,
+}: {
+  src: string;
+  fallbackAvatar?: string;
+  className: string;
+  breatheClass: string;
+  onFailed: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const tryPlay = () => {
+      void video.play()
+        .then(() => setPlaying(true))
+        .catch(() => {
+          /* iOS may defer autoplay until visible */
+        });
+    };
+
+    tryPlay();
+    video.addEventListener("loadeddata", tryPlay);
+    video.addEventListener("canplay", tryPlay);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) tryPlay();
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(video);
+
+    return () => {
+      video.removeEventListener("loadeddata", tryPlay);
+      video.removeEventListener("canplay", tryPlay);
+      observer.disconnect();
+    };
+  }, [src]);
+
+  return (
+    <div className={`relative overflow-hidden bg-black/20 ${className}`}>
+      {!playing && fallbackAvatar && (
+        <Image
+          src={fallbackAvatar}
+          alt=""
+          fill
+          className={`object-cover object-center ${breatheClass}`}
+          sizes="112px"
+        />
+      )}
+      <video
+        ref={videoRef}
+        src={src}
+        className={`absolute inset-0 h-full w-full object-cover object-center ${breatheClass} ${playing ? "opacity-100" : "opacity-0"}`}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        onPlaying={() => setPlaying(true)}
+        onError={onFailed}
+      />
+    </div>
+  );
+}
+
 export default function SpiritPetMediaAvatar({
   breedId,
   emoji,
@@ -39,19 +113,13 @@ export default function SpiritPetMediaAvatar({
 
   if (preferVideo && asset?.video && !videoFailed) {
     return (
-      <div className={`relative overflow-hidden rounded-full bg-black/20 ${sizeClass} ${className}`}>
-        <video
-          src={asset.video}
-          poster={asset.avatar}
-          className={`h-full w-full object-cover object-center ${breatheClass}`}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          onError={() => setVideoFailed(true)}
-        />
-      </div>
+      <SpiritPetVideoAvatar
+        src={asset.video}
+        fallbackAvatar={asset.avatar}
+        className={`rounded-full ${sizeClass} ${className}`}
+        breatheClass={breatheClass}
+        onFailed={() => setVideoFailed(true)}
+      />
     );
   }
 

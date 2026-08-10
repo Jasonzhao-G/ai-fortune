@@ -3,15 +3,13 @@
 import { useState } from "react";
 import { CheckCircle } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { submitMasterConsult } from "@/lib/message-store";
-import { saveRecord, buildPersonKey, buildPersonLabel } from "@/lib/record-store";
+import { submitMasterConsultWithSave } from "@/lib/submit-master-consult";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import BoostFortuneButton from "@/components/BoostFortuneButton";
 import MasterPayModal from "@/components/MasterPayModal";
 import Badge from "@/components/ui/Badge";
 import { MASTER_CONSULT_PRICE } from "@/lib/master-pay-store";
-import type { BirthInfo } from "@/lib/types";
 
 export default function MasterHubPanel() {
   const { user } = useApp();
@@ -28,27 +26,15 @@ export default function MasterHubPanel() {
 
   const submitConsult = () => {
     if (!name.trim() || !question.trim() || !user) return;
-    submitMasterConsult({
+    submitMasterConsultWithSave({
       userId: user.id,
       name: name.trim(),
-      birthYear: year,
-      birthMonth: month,
-      birthDay: day,
-      birthHour: hour,
+      year,
+      month,
+      day,
+      hour,
       calendar,
       question: question.trim(),
-    });
-    const birth: BirthInfo = {
-      year, month, day, hour, minute: 0, gender: "male", name: name.trim(),
-    };
-    saveRecord({
-      type: "master",
-      personKey: buildPersonKey(name.trim(), birth),
-      personName: name.trim(),
-      personLabel: buildPersonLabel(name.trim(), birth),
-      title: "真人大师咨询",
-      summary: question.trim().slice(0, 60),
-      data: { question: question.trim(), calendar, birth, status: "pending", price: MASTER_CONSULT_PRICE },
     });
     setSubmitted(true);
   };

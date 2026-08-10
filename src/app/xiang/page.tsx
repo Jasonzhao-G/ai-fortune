@@ -16,6 +16,7 @@ import XiangDemoDiagram from "@/components/XiangDemoDiagram";
 import PageHeader from "@/components/ui/PageHeader";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { analyzeXiangImage } from "@/lib/xiang-analyze-client";
+import { saveSessionResult, loadSessionResult, clearSessionResult } from "@/lib/session-result-cache";
 import type { AnalysisResult } from "@/lib/types";
 
 type Tab = "palm" | "face";
@@ -42,6 +43,15 @@ export default function XiangPage() {
 
   const remaining = getRemaining("xiang");
 
+  useEffect(() => {
+    const cached = loadSessionResult<{ tab: Tab; preview: string; result: AnalysisResult }>("xiang");
+    if (cached?.result && cached.preview) {
+      setTab(cached.tab);
+      setPreview(cached.preview);
+      setResult(cached.result);
+    }
+  }, []);
+
   const runAnalyze = useCallback(async () => {
     const image = pendingPreview.current;
     if (!image) return;
@@ -66,6 +76,7 @@ export default function XiangPage() {
         summary: analysis.summary,
         data: { ...analysis, tab: pendingType },
       });
+      saveSessionResult("xiang", { tab: pendingType, preview: image, result: analysis });
     } catch {
       setAnalyzeError("分析暂时失败，请重试或更换图片");
       setResult(null);
@@ -176,7 +187,7 @@ export default function XiangPage() {
               }}
             />
           </div>
-          <button onClick={() => { setPreview(null); setResult(null); }}
+          <button onClick={() => { clearSessionResult("xiang"); setPreview(null); setResult(null); }}
             className="app-btn-outline mt-3">再次测算</button>
         </div>
       )}

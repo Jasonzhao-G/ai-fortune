@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import BirthForm from "@/components/BirthForm";
 import GenerationOverlay from "@/components/GenerationOverlay";
 import AnalysisPanel from "@/components/AnalysisPanel";
@@ -13,7 +13,13 @@ import { canUse, incrementUsage, getRemaining } from "@/lib/user-store";
 import { saveRecord, buildPersonKey, buildPersonLabel } from "@/lib/record-store";
 import { saveBirthInfo } from "@/lib/birth-store";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
+import { saveSessionResult, loadSessionResult, clearSessionResult } from "@/lib/session-result-cache";
 import type { BirthInfo, BaziResult } from "@/lib/types";
+
+interface BaziSessionState {
+  birthInfo: BirthInfo;
+  bazi: BaziResult;
+}
 
 export default function BaziHubPanel() {
   const [phase, setPhase] = useState<"form" | "generating" | "result">("form");
@@ -22,6 +28,15 @@ export default function BaziHubPanel() {
   const [paywall, setPaywall] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
   const remaining = getRemaining("lifekline");
+
+  useEffect(() => {
+    const cached = loadSessionResult<BaziSessionState>("bazi");
+    if (cached?.birthInfo && cached.bazi) {
+      setBirthInfo(cached.birthInfo);
+      setBazi(cached.bazi);
+      setPhase("result");
+    }
+  }, []);
 
   const handleSubmit = (info: BirthInfo) => {
     if (!ensurePrimaryPersonBeforeCalc()) {
@@ -46,14 +61,15 @@ export default function BaziHubPanel() {
       saveBirthInfo(birthInfo);
       const personName = birthInfo.name || `命理者${birthInfo.year}`;
       saveRecord({
-        type: "lifekline",
+        type: "bazi",
         personKey: buildPersonKey(personName, birthInfo),
         personName,
         personLabel: buildPersonLabel(personName, birthInfo),
         title: "八字排盘",
         summary: analysis.summary,
-        data: { birthInfo, bazi: baziResult, analysis, kind: "bazi" },
+        data: { birthInfo, bazi: baziResult, analysis },
       });
+      saveSessionResult("bazi", { birthInfo, bazi: baziResult });
       setPhase("result");
     } catch (err) {
       console.error("bazi generate failed", err);
@@ -87,6 +103,7 @@ export default function BaziHubPanel() {
           <button
             type="button"
             onClick={() => {
+              clearSessionResult("bazi");
               setPhase("form");
               setBazi(null);
               setBirthInfo(null);

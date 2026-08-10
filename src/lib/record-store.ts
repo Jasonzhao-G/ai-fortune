@@ -3,7 +3,7 @@ import { hashBirth } from "./fortune-chart";
 
 const RECORDS_KEY = "ai-fortune-calc-records";
 
-export type RecordType = "lifekline" | "aiAsk" | "master" | "xiang" | "liuyao";
+export type RecordType = "lifekline" | "bazi" | "aiAsk" | "master" | "xiang" | "liuyao";
 
 export interface CalcRecord {
   id: string;
@@ -27,6 +27,7 @@ export interface PersonGroup {
 
 const TYPE_LABELS: Record<RecordType, string> = {
   lifekline: "人生K线",
+  bazi: "八字排盘",
   aiAsk: "问AI灵宠",
   master: "问真人大师",
   xiang: "AI看相",
@@ -35,6 +36,19 @@ const TYPE_LABELS: Record<RecordType, string> = {
 
 export function getRecordTypeLabel(type: RecordType): string {
   return TYPE_LABELS[type];
+}
+
+/** 记录 Tab 展示名（区分人生K线与八字排盘） */
+export function getRecordDisplayLabel(record: CalcRecord): string {
+  if (record.type === "bazi") return "八字排盘";
+  if (record.type === "lifekline") {
+    const data = record.data as { kind?: string } | undefined;
+    if (data?.kind === "bazi") return "八字排盘";
+    if (record.title?.startsWith("人生K线")) return record.title.split(" · ")[0] ?? "人生K线";
+    return "人生K线";
+  }
+  if (record.title) return record.title.length > 12 ? record.title.slice(0, 12) + "…" : record.title;
+  return getRecordTypeLabel(record.type);
 }
 
 export function buildPersonKey(name: string, birth?: BirthInfo | null): string {

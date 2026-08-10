@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GenerationOverlay from "@/components/GenerationOverlay";
 import ReportPosterButton, { SharePosterButton } from "@/components/ReportPosterButton";
 import PaywallModal from "@/components/PaywallModal";
@@ -13,6 +13,7 @@ import { DEMO_LIUYAO } from "@/lib/demo-data";
 import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import { grantSpiritPowerForTask } from "@/lib/spirit-pet-tasks";
+import { saveSessionResult, loadSessionResult, clearSessionResult } from "@/lib/session-result-cache";
 import PageHeader from "@/components/ui/PageHeader";
 
 export default function LiuyaoPage() {
@@ -23,6 +24,14 @@ export default function LiuyaoPage() {
   const [paywall, setPaywall] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
   const remaining = getRemaining("liuyao");
+
+  useEffect(() => {
+    const cached = loadSessionResult<{ question: string; result: HexagramResult }>("liuyao");
+    if (cached?.result) {
+      setQuestion(cached.question);
+      setResult(cached.result);
+    }
+  }, []);
 
   const handleCast = () => {
     if (!question.trim()) return;
@@ -47,6 +56,7 @@ export default function LiuyaoPage() {
       data: { question, result: hex },
     });
     grantSpiritPowerForTask("liuyao");
+    saveSessionResult("liuyao", { question, result: hex });
     setGenerating(false);
   };
 
@@ -120,7 +130,7 @@ export default function LiuyaoPage() {
             <p className="mt-3 text-xs text-app-gold">💡 {result.advice}</p>
           </div>
 
-          <button onClick={() => { setResult(null); setQuestion(""); }}
+          <button onClick={() => { clearSessionResult("liuyao"); setResult(null); setQuestion(""); }}
             className="app-btn mb-4 w-full">再来一卦？</button>
 
           <ReportPosterButton

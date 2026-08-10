@@ -11,6 +11,7 @@ import HomeKlinePreview from "@/components/HomeKlinePreview";
 import PageCarouselBanner from "@/components/PageCarouselBanner";
 import HexagramIconMini from "@/components/icons/HexagramIconMini";
 import PrimaryPersonModal from "@/components/PrimaryPersonModal";
+import SpiritPetMediaAvatar from "@/components/SpiritPetMediaAvatar";
 import { BRAND_SLOGAN_LINES } from "@/lib/brand";
 import { PAGE_BANNERS } from "@/lib/page-banners";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
@@ -167,15 +168,29 @@ export default function HomePage() {
           <DemoHeader title="AI 灵宠 · 示例" href="/spirit-pet" />
           <div className="mb-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
             {DEMO_SPIRIT_PET_BREEDS.map((b) => (
-              <div key={b.petName} className="app-card !p-2 text-center">
-                <p className="text-2xl">{b.petEmoji}</p>
+              <div key={b.breedId} className="app-card !p-2 text-center">
+                <div className="mx-auto mb-1 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl">
+                  <SpiritPetMediaAvatar
+                    breedId={b.breedId}
+                    emoji={b.petEmoji}
+                    size="lg"
+                    className="!h-full !w-full !rounded-xl"
+                  />
+                </div>
                 <p className="mt-1 text-[9px] font-medium text-app-gold">{b.petName}</p>
                 <p className="text-[8px] text-app-muted">{b.label}</p>
               </div>
             ))}
           </div>
           <div className="app-card text-center">
-            <p className="text-4xl">{DEMO_SPIRIT_PET.petEmoji}</p>
+            <div className="mx-auto mb-2 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full">
+              <SpiritPetMediaAvatar
+                breedId="jiuwei"
+                emoji={DEMO_SPIRIT_PET.petEmoji}
+                size="xl"
+                className="!h-full !w-full"
+              />
+            </div>
             <p className="mt-2 text-sm font-bold text-app-gold">{DEMO_SPIRIT_PET.petName}</p>
             <p className="mt-1 text-[10px] text-app-muted">{DEMO_SPIRIT_PET.periodLabel}</p>
             <p className="mt-2 text-xs leading-relaxed text-app-text">{DEMO_SPIRIT_PET.summary}</p>

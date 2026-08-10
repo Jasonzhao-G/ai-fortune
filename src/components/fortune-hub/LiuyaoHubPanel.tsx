@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GenerationOverlay from "@/components/GenerationOverlay";
 import ReportPosterButton, { SharePosterButton } from "@/components/ReportPosterButton";
 import PaywallModal from "@/components/PaywallModal";
@@ -14,6 +14,7 @@ import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import BoostFortuneButton from "@/components/BoostFortuneButton";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
 import { grantSpiritPowerForTask } from "@/lib/spirit-pet-tasks";
+import { saveSessionResult, loadSessionResult, clearSessionResult } from "@/lib/session-result-cache";
 
 export default function LiuyaoHubPanel() {
   const { user } = useApp();
@@ -23,6 +24,14 @@ export default function LiuyaoHubPanel() {
   const [paywall, setPaywall] = useState(false);
   const [primaryModal, setPrimaryModal] = useState(false);
   const remaining = getRemaining("liuyao");
+
+  useEffect(() => {
+    const cached = loadSessionResult<{ question: string; result: HexagramResult }>("liuyao");
+    if (cached?.result) {
+      setQuestion(cached.question);
+      setResult(cached.result);
+    }
+  }, []);
 
   const handleCast = () => {
     if (!question.trim()) return;
@@ -47,6 +56,7 @@ export default function LiuyaoHubPanel() {
       data: { question, result: hex },
     });
     grantSpiritPowerForTask("liuyao");
+    saveSessionResult("liuyao", { question, result: hex });
     setGenerating(false);
   };
 
@@ -101,7 +111,7 @@ export default function LiuyaoHubPanel() {
             <p className="whitespace-pre-line text-xs leading-relaxed text-app-muted">{result.analysis}</p>
             <p className="mt-3 text-xs text-app-gold">💡 {result.advice}</p>
           </div>
-          <button onClick={() => { setResult(null); setQuestion(""); }} className="app-btn mb-4 w-full">
+          <button onClick={() => { clearSessionResult("liuyao"); setResult(null); setQuestion(""); }} className="app-btn mb-4 w-full">
             再来一卦？
           </button>
           <ReportPosterButton

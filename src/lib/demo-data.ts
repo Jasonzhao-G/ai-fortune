@@ -28,12 +28,12 @@ export const DEMO_AI_ASK = {
 };
 
 export const DEMO_SPIRIT_PET_BREEDS = [
-  { petName: "九尾狐", petEmoji: "🦊", label: "情感陪伴" },
-  { petName: "青龙", petEmoji: "🐲", label: "事业进取" },
-  { petName: "月兔", petEmoji: "🐰", label: "治愈疗愈" },
-  { petName: "凤凰", petEmoji: "🦚", label: "重启成长" },
-  { petName: "白泽", petEmoji: "🦄", label: "智慧指引" },
-  { petName: "招财猫", petEmoji: "🐱", label: "财富行动" },
+  { breedId: "jiuwei", petName: "九尾狐", petEmoji: "🦊", label: "情感陪伴" },
+  { breedId: "qinglong", petName: "青龙", petEmoji: "🐲", label: "事业进取" },
+  { breedId: "yuetu", petName: "月兔", petEmoji: "🐰", label: "治愈疗愈" },
+  { breedId: "fenghuang", petName: "凤凰", petEmoji: "🦚", label: "重启成长" },
+  { breedId: "baize", petName: "白泽", petEmoji: "🦄", label: "智慧指引" },
+  { breedId: "zhaocai", petName: "招财猫", petEmoji: "🐱", label: "财富行动" },
 ];
 
 export const DEMO_SPIRIT_PET = {

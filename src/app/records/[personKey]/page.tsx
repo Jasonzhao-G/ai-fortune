@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import {
-  getRecordsByPerson, getRecordTypeLabel, type CalcRecord,
+  getRecordsByPerson, getRecordDisplayLabel, type CalcRecord,
 } from "@/lib/record-store";
 import type { BirthInfo, KlineData, OverallAnalysis, BaziResult } from "@/lib/types";
 import LifeklineChart from "@/components/LifeklineChart";
@@ -47,7 +47,7 @@ export default function PersonRecordsPage() {
             className={`shrink-0 rounded-xl border px-3 py-2 text-left ${
               selected?.id === r.id ? "border-app-accent bg-app-accent/10" : "border-app-border"
             }`}>
-            <p className="text-[11px] font-medium text-app-text">{getRecordTypeLabel(r.type)}</p>
+            <p className="text-[11px] font-medium text-app-text">{getRecordDisplayLabel(r)}</p>
             <p className="text-[10px] text-app-muted">{formatTime(r.createdAt)}</p>
           </button>
         ))}
@@ -66,6 +66,15 @@ function RecordDetail({ record }: { record: CalcRecord }) {
     const kline = Array.isArray(data.kline) ? (data.kline as KlineData[]) : [];
     const overall = data.overall as OverallAnalysis | undefined;
     const bazi = data.bazi as BaziResult | undefined;
+    const kind = data.kind as string | undefined;
+    if (kind === "bazi" && birthInfo && bazi) {
+      return (
+        <div>
+          <p className="mb-3 text-xs text-app-muted">{record.summary}</p>
+          <AnalysisPanel result={getMockBaziAnalysis(bazi)} bazi={bazi} />
+        </div>
+      );
+    }
     if (!birthInfo || kline.length === 0 || !overall) {
       return (
         <div className="app-card">
@@ -83,6 +92,24 @@ function RecordDetail({ record }: { record: CalcRecord }) {
             <AnalysisPanel result={getMockBaziAnalysis(bazi)} bazi={bazi} />
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (record.type === "bazi") {
+    const birthInfo = data.birthInfo as BirthInfo | undefined;
+    const bazi = data.bazi as BaziResult | undefined;
+    if (!bazi) {
+      return (
+        <div className="app-card">
+          <p className="text-xs text-app-muted">{record.summary || "记录数据不完整"}</p>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <p className="mb-3 text-xs text-app-muted">{record.summary}</p>
+        <AnalysisPanel result={getMockBaziAnalysis(bazi)} bazi={bazi} />
       </div>
     );
   }

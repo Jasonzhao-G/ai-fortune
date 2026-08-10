@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import ImageLightbox from "@/components/ImageLightbox";
 import {
   Heart, Star, Share2, ChevronDown, ChevronUp,
   UserPlus, UserCheck, MessageCircle,
@@ -29,12 +31,25 @@ interface CommunityPostCardProps {
   timeAgo: (iso: string) => string;
 }
 
-function PostImages({ images }: { images: string[] }) {
+function PostImages({
+  images,
+  onImageClick,
+}: {
+  images: string[];
+  onImageClick: (index: number) => void;
+}) {
   if (!images.length) return null;
   return (
     <div className={`mb-3 grid gap-2 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
       {images.map((img, i) => (
-        <img key={i} src={img} alt="" className="w-full rounded-xl border border-app-border object-cover max-h-48" />
+        <button
+          key={i}
+          type="button"
+          onClick={() => onImageClick(i)}
+          className="block overflow-hidden rounded-xl border border-app-border"
+        >
+          <img src={img} alt="" className="max-h-48 w-full cursor-zoom-in object-cover" />
+        </button>
       ))}
     </div>
   );
@@ -57,6 +72,7 @@ export default function CommunityPostCard({
   onFollow,
   timeAgo,
 }: CommunityPostCardProps) {
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const liked = isLiked(post, uid);
   const favorited = isFavorited(post, uid);
   const following = isFollowing(post.userId);
@@ -66,6 +82,8 @@ export default function CommunityPostCard({
     if (!onCommentImageChange || commentImage) return;
     readPastedImages(e, (url) => onCommentImageChange(url), 1, commentImage ? 1 : 0);
   };
+
+  const openLightbox = (imgs: string[], index: number) => setLightbox({ images: imgs, index });
 
   return (
     <div className="app-card">
@@ -94,7 +112,7 @@ export default function CommunityPostCard({
       {post.content && (
         <p className="mb-3 text-sm leading-relaxed text-app-text">{post.content}</p>
       )}
-      <PostImages images={images} />
+      <PostImages images={images} onImageClick={(i) => openLightbox(images, i)} />
       {post.repostOf && (
         <div className="mb-3 rounded-xl border border-app-border bg-app-bg/60 px-3 py-2">
           <p className="text-[10px] text-app-muted">原帖 @{post.repostOf.nickname}</p>
@@ -137,7 +155,13 @@ export default function CommunityPostCard({
                 </Link>
                 {c.content && <p className="text-xs text-app-muted">{c.content}</p>}
                 {c.imageUrl && (
-                  <img src={c.imageUrl} alt="" className="mt-1 max-h-32 rounded-lg border border-app-border object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => openLightbox([c.imageUrl!], 0)}
+                    className="mt-1 block overflow-hidden rounded-lg border border-app-border"
+                  >
+                    <img src={c.imageUrl} alt="" className="max-h-32 cursor-zoom-in object-cover" />
+                  </button>
                 )}
               </div>
             </div>
@@ -162,6 +186,14 @@ export default function CommunityPostCard({
               className="w-full rounded-xl border border-app-border py-2 text-xs text-app-accent">发送</button>
           </div>
         </div>
+      )}
+      {lightbox && (
+        <ImageLightbox
+          images={lightbox.images}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onIndexChange={(index) => setLightbox((prev) => (prev ? { ...prev, index } : null))}
+        />
       )}
     </div>
   );

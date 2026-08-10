@@ -20,6 +20,7 @@ import {
 } from "@/lib/record-store";
 import { saveBirthInfo } from "@/lib/birth-store";
 import { ensurePrimaryPersonBeforeCalc } from "@/lib/person-store";
+import { saveSessionResult, loadSessionResult, clearSessionResult } from "@/lib/session-result-cache";
 import PrimaryPersonModal from "@/components/PrimaryPersonModal";
 import type { BirthInfo, KlineData, YearAnalysis, OverallAnalysis, BaziResult, KlineViewMode } from "@/lib/types";
 import { X } from "lucide-react";
@@ -75,7 +76,26 @@ export default function LifeklinePage() {
     if (tab === "bazi" || tab === "liuyao" || tab === "xiang" || tab === "master" || tab === "ask" || tab === "records") {
       setHubTab(tab as FortuneHubTab);
     }
-  }, [phase]);
+    const cached = loadSessionResult<{
+      birthInfo: BirthInfo;
+      fullKline: KlineData[];
+      periodKline: KlineData[];
+      drillYear: number | null;
+      bazi: BaziResult | null;
+      overall: OverallAnalysis;
+      lifeYears: number;
+    }>("lifekline");
+    if (cached?.birthInfo && cached.fullKline?.length && cached.overall) {
+      setBirthInfo(cached.birthInfo);
+      setFullKline(cached.fullKline);
+      setPeriodKline(cached.periodKline);
+      setDrillYear(cached.drillYear);
+      setBazi(cached.bazi);
+      setOverall(cached.overall);
+      setLifeYears(cached.lifeYears);
+      setPhase("result");
+    }
+  }, []);
   const hasResult = phase === "result" && fullKline.length > 0;
   const showLifeOverview = hasResult && lifeYears < 100;
 
@@ -146,6 +166,15 @@ export default function LifeklinePage() {
         data: { birthInfo, kline: full, overall: overallResult, bazi: baziResult, lifeYears },
       });
       saveBirthInfo(birthInfo);
+      saveSessionResult("lifekline", {
+        birthInfo,
+        fullKline: full,
+        periodKline: period,
+        drillYear: null,
+        bazi: baziResult,
+        overall: overallResult,
+        lifeYears,
+      });
       setPhase("result");
     } catch (err) {
       console.error("lifekline generate failed", err);
@@ -326,6 +355,7 @@ export default function LifeklinePage() {
               </div>
 
               <button onClick={() => {
+                clearSessionResult("lifekline");
                 setPhase("form");
                 setSelectedYear(null);
                 setDrillYear(null);
